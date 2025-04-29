@@ -2,8 +2,8 @@ name: Update PRA Nighttime Results (MATLAB)
 
 on:
   schedule:
-    - cron: '0 18 * * *'  # Run daily at 03:00 AM JST
-  workflow_dispatch:       # Manual trigger option
+    - cron: '0 18 * * *'
+  workflow_dispatch:
 
 jobs:
   update-pra:
@@ -17,7 +17,7 @@ jobs:
     - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        lfs: true  # Use if you manage large files like .mat or .png
+        lfs: true
 
     - name: Set up MATLAB
       uses: matlab-actions/setup-matlab@v1
@@ -27,17 +27,14 @@ jobs:
       with:
         command: PRA_Nighttime_KAK
 
-    - name: Auto Commit and Push Results
-      uses: stefanzweifel/git-auto-commit-action@v5
-      with:
-        branch: main
-        commit_message: "📡 Daily PRA update and baseline refresh"
-        commit_user_name: syaifulafrizal
-        commit_user_email: syaifulafrizal@gmail.com
-        file_pattern: |
-          INTERMAGNET_DOWNLOADS/**/*.mat
-          INTERMAGNET_DOWNLOADS/**/*.png
-          INTERMAGNET_DOWNLOADS/**/*.txt
+    - name: Commit and Push Results
+      run: |
+        git config --global user.name 'syaifulafrizal'
+        git config --global user.email 'syaifulafrizal@gmail.com'
+        git add INTERMAGNET_DOWNLOADS/**/*.mat INTERMAGNET_DOWNLOADS/**/*.png INTERMAGNET_DOWNLOADS/**/*.txt
+        git status
+        git commit -m "📡 Daily PRA update and baseline refresh" || echo "No changes to commit"
+        git push
 
     - name: Display PRA Plot in Summary
       run: |
