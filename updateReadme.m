@@ -42,7 +42,7 @@ BottomString = [...
     "  ";
     "### Contributor";
     "  ";
-    "- [Khairul Adib Yusof](https://github.com/khairuladib94)"];
+    "- [Nur Syaiful Afrizal](https://github.com/syaifulafrizal)"];
 
 % --- Combine and Write to README ---
 FullString = [TopString; PRASection; BottomString];
