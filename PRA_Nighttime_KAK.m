@@ -56,8 +56,7 @@ for d = 1:2
 end
 
 %% STEP 2: Filter Nighttime (20:00 to 04:00 LT only)
-timestamps_local = datetime(dataAll.timestamps, 'TimeZone', 'Asia/Tokyo');
-mask = (hour(timestamps_local) >= 20) | (hour(timestamps_local) <= 4);
+mask = (hour(dataAll.timestamps) >= 20) | (hour(dataAll.timestamps) <= 4);
 dataAll = dataAll(mask, :);
 
 if height(dataAll) < 3600
@@ -65,7 +64,8 @@ if height(dataAll) < 3600
     return;
 end
 
-fprintf('✅ Nighttime data points: %d (from %s to %s)\n', height(dataAll), string(min(dataAll.timestamps)), string(max(dataAll.timestamps)));
+fprintf('✅ Filtered nighttime data: %d points, %s → %s\n', ...
+    height(dataAll), string(min(dataAll.timestamps)), string(max(dataAll.timestamps)));
 
 valid = isfinite(dataAll.X) & isfinite(dataAll.Y) & isfinite(dataAll.Z);
 dataAll = dataAll(valid, :);
