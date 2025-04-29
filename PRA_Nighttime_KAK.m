@@ -100,7 +100,7 @@ if isempty(S_Z)
 end
 
 PRA = S_Z ./ (S_G + eps);
-tBase = tBase = datetime(yesterday.Year, yesterday.Month, yesterday.Day, 20, 0, 0, 'TimeZone', tz);
+tBase = datetime(yesterday.Year, yesterday.Month, yesterday.Day, 20, 0, 0, 'TimeZone', tz);
 tUTC = tBase + seconds(ctr - 1);
 
 %% Step 4: Threshold Calculation and Tracking
