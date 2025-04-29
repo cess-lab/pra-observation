@@ -1,4 +1,4 @@
-name: Update PRA Nighttime Results (Octave)
+name: Update PRA Nighttime Results (MATLAB)
 
 on:
   schedule:
@@ -19,19 +19,18 @@ jobs:
       with:
         lfs: true
 
-    - name: Install Octave
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y octave gnuplot
+    - name: Set up MATLAB
+      uses: matlab-actions/setup-matlab@v1
 
-    - name: Run PRA Detection
-      run: |
-        octave --no-gui --eval "PRA_Nighttime_KAK_Octave"
+    - name: Run PRA Detection Script
+      uses: matlab-actions/run-command@v1
+      with:
+        command: PRA_Nighttime_KAK
 
-    - name: Commit and Push Results
+    - name: Auto Commit and Push Results
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        branch: 'main'
+        branch: main
         commit_message: "📡 Daily PRA result update"
         commit_user_name: khairuladib94
         commit_user_email: adib.yusof@upm.edu.my
