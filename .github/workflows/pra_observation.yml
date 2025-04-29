@@ -1,10 +1,9 @@
-name: Update PRA Nighttime Results
-run-name: PRA results updated by ${{ github.actor }}
+name: Update PRA Nighttime Results (Octave)
 
 on:
-  workflow_dispatch:
   schedule:
-    - cron: '0 18 * * *'  # 3:00 AM JST
+    - cron: '0 18 * * *'  # 3:00 AM JST daily
+  workflow_dispatch:
 
 jobs:
   update-pra:
@@ -15,28 +14,33 @@ jobs:
     env:
       GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - name: Checkout repo
+    - name: Checkout repository
       uses: actions/checkout@v4
       with:
-        lfs: true  # if you're storing large .mat/.png files
+        lfs: true
 
-    - name: Set up MATLAB
-      uses: matlab-actions/setup-matlab@v1
+    - name: Install Octave
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y octave gnuplot
 
-    - name: Run PRA script
-      uses: matlab-actions/run-command@v1
-      with:
-        command: PRA_Nighttime_KAK  # <-- your main script/function name
+    - name: Run PRA Detection
+      run: |
+        octave --no-gui --eval "PRA_Nighttime_KAK_Octave"
 
-    - name: Auto commit & push PRA results
+    - name: Commit and Push Results
       uses: stefanzweifel/git-auto-commit-action@v5
       with:
-        branch: main
+        branch: 'main'
         commit_message: "📡 Daily PRA result update"
-        commit_user_name: syaifulafrizal
-        commit_user_email: syaifulafrizal@gmail.com
-        
-    - name: Display PRA plot in summary
+        commit_user_name: khairuladib94
+        commit_user_email: adib.yusof@upm.edu.my
+        file_pattern: |
+          INTERMAGNET_DOWNLOADS/**/*.mat
+          INTERMAGNET_DOWNLOADS/**/*.png
+          INTERMAGNET_DOWNLOADS/**/*.txt
+
+    - name: Display PRA Plot in Summary
       run: |
-        echo "### 🛰️ Latest PRA Plot" >> $GITHUB_STEP_SUMMARY
-        echo "![PRA](./INTERMAGNET_DOWNLOADS/figures/PRA_$(date +'%Y%m%d').png)" >> $GITHUB_STEP_SUMMARY
+        echo "### 🛰️ Latest PRA Nighttime Plot" >> $GITHUB_STEP_SUMMARY
+        echo "![PRA Plot](./INTERMAGNET_DOWNLOADS/figures/PRA_$(date +'%Y%m%d').png)" >> $GITHUB_STEP_SUMMARY
