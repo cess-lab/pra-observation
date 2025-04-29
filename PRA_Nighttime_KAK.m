@@ -1,5 +1,5 @@
 function PRA_Nighttime_KAK
-%% NIGHTTIME PRA DETECTION (Final version with figure fix, correct nighttime window, segment validation, and safeguard)
+%% NIGHTTIME PRA DETECTION (Final with Threshold Averaging + README Update)
 clc; clear; close all;
 
 %% Setup
@@ -64,9 +64,6 @@ if height(dataAll) < 3600
     return;
 end
 
-fprintf('✅ Filtered nighttime data: %d points, %s → %s\n', ...
-    height(dataAll), string(min(dataAll.timestamps)), string(max(dataAll.timestamps)));
-
 valid = isfinite(dataAll.X) & isfinite(dataAll.Y) & isfinite(dataAll.Z);
 dataAll = dataAll(valid, :);
 
@@ -89,18 +86,19 @@ for s = 1:step:(length(Z) - winLen + 1)
     if ~any(idx), continue; end
     PSDz = abs(fft(segZ)).^2 / winLen;
     PSDg = abs(fft(segG)).^2 / winLen;
-    S_Z(end+1) = sum(PSDz(idx)); %#ok<AGROW>
-    S_G(end+1) = sum(PSDg(idx)); %#ok<AGROW>
-    ctr(end+1) = c;              %#ok<AGROW>
+    S_Z(end+1) = sum(PSDz(idx));
+    S_G(end+1) = sum(PSDg(idx));
+    ctr(end+1) = c;
 end
 
 if isempty(S_Z) || isempty(S_G)
-    warning('⚠️ No valid PRA segments. Skipping plot.');
+    warning('No valid PRA segments.');
     return;
 end
 
 PRA = S_Z ./ (S_G + eps);
-tUTC = timestamps(1) + seconds(ctr - 1);
+ctr(ctr > length(timestamps)) = length(timestamps);
+tUTC = timestamps(round(ctr));
 
 %% STEP 4: Threshold File (.txt)
 todayClean = datetime(year(today), month(today), day(today));
@@ -108,20 +106,18 @@ todayThr = mean(PRA, 'omitnan') + 2*std(PRA, 'omitnan');
 
 if exist(thresholdFile, 'file')
     T = readtable(thresholdFile, 'Delimiter', '\t');
-    % Remove existing entry for today (prevent duplicates)
-    T(T.Date == todayClean, :) = [];
+    T(T.Date == todayClean, :) = []; % Avoid duplicate entries
 else
     T = table('Size', [0 2], 'VariableTypes', ["datetime", "double"], 'VariableNames', ["Date", "Threshold"]);
 end
 
-newEntry = table(todayClean, todayThr, 'VariableNames', ["Date", "Threshold"]);
-T = [T; newEntry];
+T = [T; table(todayClean, todayThr)];
 writetable(T, thresholdFile, 'Delimiter', '\t');
 
 n = height(T);
 if n >= 3
     recent = T.Threshold(end-2:end); weights = [0.2; 0.2; 0.6];
-elseif n == 2
+elif n == 2
     recent = T.Threshold(end-1:end); weights = [0.2; 0.8];
 else
     recent = T.Threshold(end); weights = 1;
@@ -129,7 +125,7 @@ end
 thr = sum(recent .* weights) / sum(weights);
 anomalyIdx = PRA > thr;
 
-%% STEP 5: Plot PRA and PSD (with try-catch)
+%% STEP 5: Plot PRA and PSD
 figFile = fullfile(figFolder, sprintf('PRA_%s.png', datestr(today,'yyyymmdd')));
 try
     figure('visible', 'off');
@@ -157,7 +153,7 @@ try
 
     saveas(gcf, figFile);
 catch plotErr
-    warning('⚠️ Plotting failed: %s', plotErr.message);
+    warning('Plotting failed: %s', plotErr.message);
 end
 
 %% STEP 6: Save Results
@@ -189,6 +185,10 @@ end
 
 fprintf('✅ PRA Nighttime Analysis Completed\n');
 
-% Final: Update README
-updateReadme();
+%% STEP 9: Update README with latest PRA image
+try
+    updateReadme();
+catch err
+    warning('README update failed: %s', err.message);
+end
 end
