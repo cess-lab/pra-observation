@@ -1,0 +1,38 @@
+name: Daily PRA Nighttime Check
+
+on:
+  schedule:
+    - cron: '0 18 * * *'  # 18:00 UTC = 03:00 Tokyo time
+  workflow_dispatch:       # Allow manual trigger
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    - name: Install MATLAB Runtime
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y wget unzip
+        wget -q https://ssd.mathworks.com/supportfiles/downloads/R2024a/Release/0/deployment_files/installer/complete/glnxa64/MATLAB_Runtime_R2024a_glnxa64.zip
+        unzip -q MATLAB_Runtime_R2024a_glnxa64.zip
+        ./install -mode silent -agreeToLicense yes -destinationFolder /opt/matlab_runtime
+
+    - name: Install Octave
+      run: |
+        sudo apt-get install -y octave
+
+    - name: Run PRA Detection
+      run: |
+        octave PRA_Nighttime.m
+
+    - name: Upload Results
+      uses: actions/upload-artifact@v4
+      with:
+        name: PRA-Results
+        path: |
+          ./INTERMAGNET_DOWNLOADS/
+          ./INTERMAGNET_DOWNLOADS/figures/
