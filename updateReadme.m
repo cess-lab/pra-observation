@@ -36,7 +36,7 @@ lines = [
     "- Threshold calculated based on weighted mean of recent days";
     "";
     "### Author";
-    "- [Khairul Adib Yusof](https://github.com/syaifulafrizal)";
+    "- [Nur Syaiful Afrizal](https://github.com/syaifulafrizal)";
 ];
 
 % Write to README.md
