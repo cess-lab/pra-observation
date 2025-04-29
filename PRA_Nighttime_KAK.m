@@ -1,5 +1,5 @@
 function PRA_Nighttime_KAK
-%% NIGHTTIME PRA DETECTION (MATLAB Version with Weighted Threshold Updating)
+%% NIGHTTIME PRA DETECTION (MATLAB Version with Weighted Threshold Updating into TXT)
 clc; clear; close all;
 
 %% Setup
@@ -7,6 +7,7 @@ stationCode = 'KAK';
 sampleRate = 'second';
 outFolder = fullfile(pwd, 'INTERMAGNET_DOWNLOADS');
 figFolder = fullfile(outFolder, 'figures');
+thresholdFile = fullfile(outFolder, 'PRA_Thresholds.txt');
 
 if ~exist(outFolder, 'dir'), mkdir(outFolder); end
 if ~exist(figFolder, 'dir'), mkdir(figFolder); end
@@ -102,44 +103,36 @@ PRA = S_Z ./ (S_G + eps);
 tBase = timestamps(1);
 tUTC = tBase + seconds(ctr - 1);
 
-%% STEP 4: Update PRA Thresholds (Weighted)
-thresholdFile = fullfile(outFolder, 'PRA_Thresholds.mat');
-
-if isfile(thresholdFile)
-    loaded = load(thresholdFile);
-    thresholdHistory = loaded.thresholdHistory;
-    thresholdDates = loaded.thresholdDates;
-else
-    thresholdHistory = [];
-    thresholdDates = [];
-end
-
-% Today's threshold (simple mean + 2*std from today's PRA)
+%% STEP 4: Update Threshold File (TXT)
 todayThr = mean(PRA, 'omitnan') + 2*std(PRA, 'omitnan');
 
-% Update threshold history
-thresholdHistory = [thresholdHistory; todayThr];
-thresholdDates = [thresholdDates; today];
-
-% Save back updated
-save(thresholdFile, 'thresholdHistory', 'thresholdDates');
-
-% --- Now compute Weighted Threshold ---
-n = numel(thresholdHistory);
-
-if n >= 3
-    % last 3 days (today + 2 days)
-    recentThr = thresholdHistory(end-2:end);
-    weights = [0.2; 0.2; 0.6];
-    thr = sum(recentThr .* weights) / sum(weights);
-elseif n == 2
-    recentThr = thresholdHistory(end-1:end);
-    weights = [0.2; 0.8];
-    thr = sum(recentThr .* weights) / sum(weights);
+% If file exists, load history
+if exist(thresholdFile, 'file')
+    opts = detectImportOptions(thresholdFile,'Delimiter','\t');
+    T = readtable(thresholdFile, opts);
+    thresholdHistory = T.Threshold;
 else
-    % only today available
-    thr = thresholdHistory(end);
+    T = table();
+    thresholdHistory = [];
 end
+
+% Update
+T = [T; table(today, todayThr)];
+writetable(T, thresholdFile, 'Delimiter', '\t');
+
+% Weighted Threshold Calculation
+n = height(T);
+if n >= 3
+    recent = T.Threshold(end-2:end);
+    weights = [0.2; 0.2; 0.6];
+elseif n == 2
+    recent = T.Threshold(end-1:end);
+    weights = [0.2; 0.8];
+else
+    recent = T.Threshold(end);
+    weights = 1;
+end
+thr = sum(recent .* weights) / sum(weights);
 
 % Detect anomalies
 anomalyIdx = PRA > thr;
@@ -199,7 +192,7 @@ end
 
 fprintf('✅ PRA Nighttime Analysis Completed\n');
 
-% Final: Update README
-updateReadme(); % Call updateReadme() automatically!
+% STEP 8: Update README
+updateReadme();
 
 end
