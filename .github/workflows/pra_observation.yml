@@ -2,7 +2,7 @@ name: Update PRA Nighttime Results (MATLAB)
 
 on:
   schedule:
-    - cron: '0 18 * * *'
+    - cron: '0 18 * * *'  # Daily 03:00 AM JST
   workflow_dispatch:
 
 jobs:
@@ -31,10 +31,13 @@ jobs:
       run: |
         git config --global user.name 'syaifulafrizal'
         git config --global user.email 'syaifulafrizal@gmail.com'
-        git add INTERMAGNET_DOWNLOADS/**/*.mat INTERMAGNET_DOWNLOADS/**/*.png INTERMAGNET_DOWNLOADS/**/*.txt
-        git status
-        git commit -m "📡 Daily PRA update and baseline refresh" || echo "No changes to commit"
-        git push
+        if ls INTERMAGNET_DOWNLOADS/**/*.mat INTERMAGNET_DOWNLOADS/**/*.png INTERMAGNET_DOWNLOADS/**/*.txt README.md 1> /dev/null 2>&1; then
+          git add INTERMAGNET_DOWNLOADS/**/*.mat INTERMAGNET_DOWNLOADS/**/*.png INTERMAGNET_DOWNLOADS/**/*.txt README.md
+          git commit -m "📡 Daily PRA update and baseline refresh" || echo "No changes to commit"
+          git push
+        else
+          echo "⚠️ No new output files to add."
+        fi
 
     - name: Display PRA Plot in Summary
       run: |
