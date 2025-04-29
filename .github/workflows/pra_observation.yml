@@ -35,3 +35,8 @@ jobs:
         commit_message: "📡 Daily PRA result update"
         commit_user_name: syaifulafrizal
         commit_user_email: syaifulafrizal@gmail.com
+        
+    - name: Display PRA plot in summary
+      run: |
+        echo "### 🛰️ Latest PRA Plot" >> $GITHUB_STEP_SUMMARY
+        echo "![PRA](./INTERMAGNET_DOWNLOADS/figures/PRA_$(date +'%Y%m%d').png)" >> $GITHUB_STEP_SUMMARY
