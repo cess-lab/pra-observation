@@ -108,16 +108,16 @@ todayThr = mean(PRA, 'omitnan') + 2*std(PRA, 'omitnan');
 
 % If file exists, load history
 if exist(thresholdFile, 'file')
-    opts = detectImportOptions(thresholdFile,'Delimiter','\t');
-    T = readtable(thresholdFile, opts);
-    thresholdHistory = T.Threshold;
+    T = readtable(thresholdFile, 'Delimiter', '\t');
 else
-    T = table();
-    thresholdHistory = [];
+    T = table('Size', [0 2], 'VariableTypes', ["datetime", "double"], 'VariableNames', ["Date", "Threshold"]);
 end
 
-% Update
-T = [T; table(today, todayThr)];
+% Append today's new threshold
+newEntry = table(today, todayThr, 'VariableNames', ["Date", "Threshold"]);
+T = [T; newEntry];
+
+% Save back
 writetable(T, thresholdFile, 'Delimiter', '\t');
 
 % Weighted Threshold Calculation
