@@ -1,5 +1,5 @@
 function PRA_Nighttime_KAK
-%% NIGHTTIME PRA DETECTION (Final version with figure fix, correct nighttime window, and segment validation)
+%% NIGHTTIME PRA DETECTION (Final version with figure fix, correct nighttime window, segment validation, and safeguard)
 clc; clear; close all;
 
 %% Setup
@@ -108,6 +108,8 @@ todayThr = mean(PRA, 'omitnan') + 2*std(PRA, 'omitnan');
 
 if exist(thresholdFile, 'file')
     T = readtable(thresholdFile, 'Delimiter', '\t');
+    % Remove existing entry for today (prevent duplicates)
+    T(T.Date == todayClean, :) = [];
 else
     T = table('Size', [0 2], 'VariableTypes', ["datetime", "double"], 'VariableNames', ["Date", "Threshold"]);
 end
@@ -127,32 +129,36 @@ end
 thr = sum(recent .* weights) / sum(weights);
 anomalyIdx = PRA > thr;
 
-%% STEP 5: Plot PRA and PSD (fix axis range)
+%% STEP 5: Plot PRA and PSD (with try-catch)
 figFile = fullfile(figFolder, sprintf('PRA_%s.png', datestr(today,'yyyymmdd')));
-figure('visible', 'off');
+try
+    figure('visible', 'off');
 
-subplot(2,1,1);
-plot(tUTC, PRA, 'k-', 'LineWidth', 1.2); hold on;
-yline(thr, '--r', 'Threshold');
-scatter(tUTC(anomalyIdx), PRA(anomalyIdx), 'ro', 'filled');
-xlabel('Time (Local)'); ylabel('PRA');
-title(sprintf('PRA - %s Nighttime', stationCode));
-grid on;
-datetick('x','HH:MM');
-startTime = datetime(today - days(1) + hours(20), 'TimeZone', 'Asia/Tokyo');
-endTime   = datetime(today + hours(4), 'TimeZone', 'Asia/Tokyo');
-xlim([startTime endTime]);
+    subplot(2,1,1);
+    plot(tUTC, PRA, 'k-', 'LineWidth', 1.2); hold on;
+    yline(thr, '--r', 'Threshold');
+    scatter(tUTC(anomalyIdx), PRA(anomalyIdx), 'ro', 'filled');
+    xlabel('Time (Local)'); ylabel('PRA');
+    title(sprintf('PRA - %s Nighttime', stationCode));
+    grid on;
+    datetick('x','HH:MM');
+    startTime = datetime(today - days(1) + hours(20), 'TimeZone', 'Asia/Tokyo');
+    endTime   = datetime(today + hours(4), 'TimeZone', 'Asia/Tokyo');
+    xlim([startTime endTime]);
 
-subplot(2,1,2);
-plot(tUTC, S_Z, 'b-', 'LineWidth', 1.2); hold on;
-plot(tUTC, S_G, 'g--', 'LineWidth', 1.2);
-xlabel('Time (Local)'); ylabel('Power');
-legend('S_Z','S_G'); title('Power Spectral Density');
-grid on;
-datetick('x','HH:MM');
-xlim([startTime endTime]);
+    subplot(2,1,2);
+    plot(tUTC, S_Z, 'b-', 'LineWidth', 1.2); hold on;
+    plot(tUTC, S_G, 'g--', 'LineWidth', 1.2);
+    xlabel('Time (Local)'); ylabel('Power');
+    legend('S_Z','S_G'); title('Power Spectral Density');
+    grid on;
+    datetick('x','HH:MM');
+    xlim([startTime endTime]);
 
-saveas(gcf, figFile);
+    saveas(gcf, figFile);
+catch plotErr
+    warning('⚠️ Plotting failed: %s', plotErr.message);
+end
 
 %% STEP 6: Save Results
 resultFile = fullfile(outFolder, sprintf('PRA_Night_%s.mat', datestr(today,'yyyymmdd')));
