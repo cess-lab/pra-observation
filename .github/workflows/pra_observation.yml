@@ -2,7 +2,7 @@ name: Update PRA Nighttime Results (MATLAB)
 
 on:
   schedule:
-    - cron: '0 18 * * *'  # Daily 03:00 AM JST
+    - cron: '0 18 * * *'  
   workflow_dispatch:
 
 jobs:
@@ -11,8 +11,6 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: write
-    env:
-      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
     - name: Checkout repository
       uses: actions/checkout@v4
@@ -33,7 +31,7 @@ jobs:
         git config --global user.email 'syaifulafrizal@gmail.com'
         if ls INTERMAGNET_DOWNLOADS/**/*.mat INTERMAGNET_DOWNLOADS/**/*.png INTERMAGNET_DOWNLOADS/**/*.txt README.md 1> /dev/null 2>&1; then
           git add INTERMAGNET_DOWNLOADS/**/*.mat INTERMAGNET_DOWNLOADS/**/*.png INTERMAGNET_DOWNLOADS/**/*.txt README.md
-          git commit -m "📡 Daily PRA update and baseline refresh" || echo "No changes to commit"
+          git commit -m "📡 Daily PRA and Threshold update" || echo "No changes to commit"
           git push
         else
           echo "⚠️ No new output files to add."
