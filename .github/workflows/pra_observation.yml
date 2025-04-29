@@ -1,33 +1,37 @@
-name: Daily PRA Nighttime Check (Octave)
+name: Update PRA Nighttime Results
+run-name: PRA results updated by ${{ github.actor }}
 
 on:
+  workflow_dispatch:
   schedule:
-    - cron: '0 18 * * *'  # Runs daily at 03:00 AM Japan time (18:00 UTC)
-  workflow_dispatch:      # Also allow manual trigger from GitHub UI
+    - cron: '0 18 * * *'  # 3:00 AM JST
 
 jobs:
-  run-pra:
+  update-pra:
+    name: Run PRA Nighttime Analysis
     runs-on: ubuntu-latest
-
+    permissions:
+      contents: write
+    env:
+      GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
     steps:
-    - name: Checkout repository
+    - name: Checkout repo
       uses: actions/checkout@v4
       with:
-        persist-credentials: true  # Allow pushing back results
+        lfs: true  # if you're storing large .mat/.png files
 
-    - name: Install Octave
-      run: |
-        sudo apt-get update
-        sudo apt-get install -y octave gnuplot
+    - name: Set up MATLAB
+      uses: matlab-actions/setup-matlab@v1
 
-    - name: Run PRA Detection Script
-      run: |
-        octave --no-gui --eval "PRA_Nighttime_KAK_Octave"
+    - name: Run PRA script
+      uses: matlab-actions/run-command@v1
+      with:
+        command: PRA_Nighttime_KAK  # <-- your main script/function name
 
-    - name: Commit and Push Results
-      run: |
-        git config --global user.name 'syaifulafrizal'
-        git config --global user.email 'syaifulafrizal@gmail.com'
-        git add INTERMAGNET_DOWNLOADS/
-        git commit -m "Daily PRA result update: $(date '+%Y-%m-%d')" || echo "No changes to commit"
-        git push
+    - name: Auto commit & push PRA results
+      uses: stefanzweifel/git-auto-commit-action@v5
+      with:
+        branch: main
+        commit_message: "📡 Daily PRA result update"
+        commit_user_name: syaifulafrizal
+        commit_user_email: syaifulafrizal@gmail.com
