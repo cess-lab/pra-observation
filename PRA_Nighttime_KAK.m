@@ -106,6 +106,9 @@ tUTC = tBase + seconds(ctr - 1);
 %% STEP 4: Update Threshold File (TXT)
 todayThr = mean(PRA, 'omitnan') + 2*std(PRA, 'omitnan');
 
+% Remove timezone from 'today' datetime
+todayNoTZ = datetime(year(today), month(today), day(today)); % Just date
+
 % If file exists, load history
 if exist(thresholdFile, 'file')
     T = readtable(thresholdFile, 'Delimiter', '\t');
@@ -114,10 +117,10 @@ else
 end
 
 % Append today's new threshold
-newEntry = table(today, todayThr, 'VariableNames', ["Date", "Threshold"]);
+newEntry = table(todayNoTZ, todayThr, 'VariableNames', ["Date", "Threshold"]);
 T = [T; newEntry];
 
-% Save back
+% Save updated threshold file
 writetable(T, thresholdFile, 'Delimiter', '\t');
 
 % Weighted Threshold Calculation
