@@ -1,5 +1,5 @@
 function PRA_Nighttime_KAK
-%% NIGHTTIME PRA DETECTION (Final version with figure fix & correct nighttime window)
+%% NIGHTTIME PRA DETECTION (Final version with figure fix, correct nighttime window, and segment validation)
 clc; clear; close all;
 
 %% Setup
@@ -65,6 +65,8 @@ if height(dataAll) < 3600
     return;
 end
 
+fprintf('✅ Nighttime data points: %d (from %s to %s)\n', height(dataAll), string(min(dataAll.timestamps)), string(max(dataAll.timestamps)));
+
 valid = isfinite(dataAll.X) & isfinite(dataAll.Y) & isfinite(dataAll.Z);
 dataAll = dataAll(valid, :);
 
@@ -90,6 +92,11 @@ for s = 1:step:(length(Z) - winLen + 1)
     S_Z(end+1) = sum(PSDz(idx)); %#ok<AGROW>
     S_G(end+1) = sum(PSDg(idx)); %#ok<AGROW>
     ctr(end+1) = c;              %#ok<AGROW>
+end
+
+if isempty(S_Z) || isempty(S_G)
+    warning('⚠️ No valid PRA segments. Skipping plot.');
+    return;
 end
 
 PRA = S_Z ./ (S_G + eps);
