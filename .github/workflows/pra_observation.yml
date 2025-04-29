@@ -22,7 +22,7 @@ jobs:
 
     - name: Run PRA Detection Script
       run: |
-        octave --no-gui --eval "PRA_Nighttime"
+        octave --no-gui --eval "PRA_Nighttime_KAK"
 
     - name: Commit and Push Results
       run: |
