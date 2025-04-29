@@ -1,25 +1,28 @@
-%% NIGHTTIME PRA DETECTION (Octave-Compatible, Baseline Updated)
+function PRA_Nighttime_KAK
+%% NIGHTTIME PRA DETECTION (MATLAB Version with Baseline Updating)
 clc; clear; close all;
 
-graphics_toolkit("gnuplot");  % Safe for headless GitHub Action runs
-
-%% STEP 1: Setup
+%% Setup
 stationCode = 'KAK';
 sampleRate = 'second';
+outFolder = fullfile(pwd, 'INTERMAGNET_DOWNLOADS');
+figFolder = fullfile(outFolder, 'figures');
 
-today = floor(now);            % Today at 00:00
-yesterday = today - 1;         % Yesterday at 00:00
+if ~exist(outFolder, 'dir'), mkdir(outFolder); end
+if ~exist(figFolder, 'dir'), mkdir(figFolder); end
+
+today = dateshift(datetime('now', 'TimeZone', 'Asia/Tokyo'), 'start', 'day');
+yesterday = today - days(1);
 
 baseUrl = 'https://imag-data.bgs.ac.uk:443/GIN_V1/GINServices';
-outFolder = fullfile(pwd, 'INTERMAGNET_DOWNLOADS');
-if ~exist(outFolder, 'dir'), mkdir(outFolder); end
-
 datesToGet = [yesterday, today];
 dataAll = [];
 
+%% STEP 1: Download and Read Data
 for d = 1:2
     dateStr = datestr(datesToGet(d), 'yyyy-mm-dd');
     outFile = fullfile(outFolder, sprintf('%s_%s.iaga2002', stationCode, datestr(datesToGet(d), 'yyyymmdd')));
+    
     params = [
         "Request=GetData", ...
         "observatoryIagaCode=" + stationCode, ...
@@ -40,39 +43,36 @@ for d = 1:2
         return;
     end
 
-    % Read file
+    % Read IAGA2002
     fid = fopen(outFile, 'r');
     rawData = textscan(fid, '%s %s %f %f %f %f %f', 'HeaderLines', 26);
     fclose(fid);
 
-    dt = datenum(strcat(rawData{1}, {' '}, rawData{2}));
+    timestamps = datetime(strcat(rawData{1}, {' '}, rawData{2}), 'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS', 'TimeZone', 'Asia/Tokyo');
     X = rawData{4}; Y = rawData{5}; Z = rawData{6};
 
-    dataAll = [dataAll; [dt, X, Y, Z]]; %#ok<AGROW>
+    dataAll = [dataAll; table(timestamps, X, Y, Z)];
 end
 
-%% STEP 2: Nighttime Filtering (20:00 to 04:00)
-startTimeVec = datevec(yesterday); startTimeVec(4) = 20;
-endTimeVec   = datevec(today);     endTimeVec(4)   = 4;
-startTime = datenum(startTimeVec);
-endTime   = datenum(endTimeVec);
-
-mask = (dataAll(:,1) >= startTime) & (dataAll(:,1) <= endTime);
+%% STEP 2: Filter Nighttime (20:00 to 04:00)
+mask = (hour(dataAll.timestamps) >= 20) | (hour(dataAll.timestamps) <= 4);
 nightData = dataAll(mask, :);
 
-if size(nightData,1) < 3600
+if height(nightData) < 3600
     warning('Not enough nighttime data.');
     return;
 end
 
-valid = all(isfinite(nightData(:,2:4)), 2);
+valid = isfinite(nightData.X) & isfinite(nightData.Y) & isfinite(nightData.Z);
 nightData = nightData(valid, :);
 
-timestamps = nightData(:,1);
-X = nightData(:,2); Y = nightData(:,3); Z = nightData(:,4);
+timestamps = nightData.timestamps;
+X = nightData.X;
+Y = nightData.Y;
+Z = nightData.Z;
 G = hypot(X, Y);
 
-%% STEP 3: PRA Analysis
+%% STEP 3: PRA Calculation
 Fs = 1; winLen = 3600; step = 3600;
 f_low = 0.01; f_high = 0.05;
 
@@ -93,70 +93,73 @@ for s = 1:step:(length(Z) - winLen + 1)
 end
 
 if isempty(S_Z)
-    warning('No valid PSD segments found.');
+    warning('No valid PSD segments.');
     return;
 end
 
 PRA = S_Z ./ (S_G + eps);
-tBase = startTime;
-tUTC = tBase + (ctr - 1) / (24 * 3600);
+tBase = timestamps(1);
+tUTC = tBase + seconds(ctr - 1);
 
-%% STEP 4: Update PRA Baseline
+%% STEP 4: Update Baseline and Recalculate Threshold
 baselineFile = fullfile(outFolder, 'PRA_Baseline.mat');
 
-if exist(baselineFile, 'file')
-    load(baselineFile, 'allPRA');
+if isfile(baselineFile)
+    loaded = load(baselineFile);
+    allPRA = loaded.allPRA;
 else
     allPRA = [];
 end
 
-allPRA = [allPRA; PRA(:)];  % append today's PRA
-
+% Append today's PRA
+allPRA = [allPRA; PRA(:)];
 save(baselineFile, 'allPRA');
 
-% Recompute threshold with all cumulative PRA
-thr = mean(allPRA) + 2*std(allPRA);
+% Calculate smarter threshold
+thr = mean(allPRA) + 2 * std(allPRA);
 
+% Detect anomalies
 anomalyIdx = PRA > thr;
 
-%% STEP 5: Plotting
-figFolder = fullfile(outFolder, 'figures');
-if ~exist(figFolder, 'dir'), mkdir(figFolder); end
+%% STEP 5: Plot PRA and PSD
+figFile = fullfile(figFolder, sprintf('PRA_%s.png', datestr(today,'yyyymmdd')));
+figure('visible', 'off');
 
-figure('visible','off');
 subplot(2,1,1);
 plot(tUTC, PRA, 'k-', 'LineWidth', 1.2); hold on;
 yline(thr, '--r', 'Threshold');
-plot(tUTC(anomalyIdx), PRA(anomalyIdx), 'ro', 'MarkerFaceColor','r');
-datetick('x','HH:MM');
+scatter(tUTC(anomalyIdx), PRA(anomalyIdx), 'ro', 'filled');
 xlabel('Time (Local)');
 ylabel('PRA');
 title(sprintf('PRA - %s Nighttime', stationCode));
 grid on;
+datetick('x','HH:MM');
 
 subplot(2,1,2);
 plot(tUTC, S_Z, 'b-', 'LineWidth', 1.2); hold on;
 plot(tUTC, S_G, 'g--', 'LineWidth', 1.2);
-datetick('x','HH:MM');
 xlabel('Time (Local)');
 ylabel('Power');
 legend('S_Z','S_G');
 title('Power Spectral Density');
 grid on;
+datetick('x','HH:MM');
 
-saveas(gcf, fullfile(figFolder, sprintf('PRA_%s.png', datestr(today,'yyyymmdd'))));
+saveas(gcf, figFile);
 
-%% STEP 6: Save Daily Result
+%% STEP 6: Save Results
+resultFile = fullfile(outFolder, sprintf('PRA_Night_%s.mat', datestr(today,'yyyymmdd')));
 PRA_Result.tUTC = tUTC;
 PRA_Result.PRA = PRA;
 PRA_Result.S_Z = S_Z;
 PRA_Result.S_G = S_G;
 PRA_Result.thr = thr;
 PRA_Result.anomalyIdx = anomalyIdx;
-save(fullfile(outFolder, sprintf('PRA_Night_%s.mat', datestr(today,'yyyymmdd'))), 'PRA_Result');
+save(resultFile, 'PRA_Result');
 
-% Save anomaly flag
-fid = fopen(fullfile(outFolder, 'anomaly_detected.txt'), 'w');
+% Save anomaly status
+txtFile = fullfile(outFolder, 'anomaly_detected.txt');
+fid = fopen(txtFile, 'w');
 if any(anomalyIdx)
     fprintf(fid, 'Anomaly detected at:\n');
     fprintf(fid, '%s\n', datestr(tUTC(anomalyIdx)));
@@ -165,10 +168,12 @@ else
 end
 fclose(fid);
 
-%% STEP 7: Clean Up Raw Files
+%% STEP 7: Clean up raw IAGA files
 iagaFiles = dir(fullfile(outFolder, '*.iaga2002'));
 for k = 1:length(iagaFiles)
     delete(fullfile(outFolder, iagaFiles(k).name));
 end
 
-fprintf('PRA Nighttime Analysis Completed ✅\n');
+fprintf('✅ PRA Nighttime Analysis Completed\n');
+
+end
