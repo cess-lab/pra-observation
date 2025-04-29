@@ -1,5 +1,5 @@
 function PRA_Nighttime_KAK
-%% NIGHTTIME PRA DETECTION (MATLAB Version with Weighted Threshold Updating into TXT)
+%% NIGHTTIME PRA DETECTION (Final version with figure fix & correct nighttime window)
 clc; clear; close all;
 
 %% Setup
@@ -23,7 +23,7 @@ dataAll = [];
 for d = 1:2
     dateStr = datestr(datesToGet(d), 'yyyy-mm-dd');
     outFile = fullfile(outFolder, sprintf('%s_%s.iaga2002', stationCode, datestr(datesToGet(d), 'yyyymmdd')));
-    
+
     params = [
         "Request=GetData", ...
         "observatoryIagaCode=" + stationCode, ...
@@ -32,10 +32,9 @@ for d = 1:2
         "dataDuration=1", ...
         "publicationState=adjusted", ...
         "orientation=native", ...
-        "format=iaga2002"
-    ];
-    url = baseUrl + "?" + strjoin(params, '&');
+        "format=iaga2002"];
 
+    url = baseUrl + "?" + strjoin(params, '&');
     fprintf('Downloading: %s\n', dateStr);
     try
         websave(outFile, url);
@@ -56,22 +55,21 @@ for d = 1:2
     dataAll = [dataAll; table(timestamps, X, Y, Z)];
 end
 
-%% STEP 2: Filter Nighttime (20:00 to 04:00)
-mask = (hour(dataAll.timestamps) >= 20) | (hour(dataAll.timestamps) <= 4);
-nightData = dataAll(mask, :);
+%% STEP 2: Filter Nighttime (20:00 to 04:00 LT only)
+timestamps_local = datetime(dataAll.timestamps, 'TimeZone', 'Asia/Tokyo');
+mask = (hour(timestamps_local) >= 20) | (hour(timestamps_local) <= 4);
+dataAll = dataAll(mask, :);
 
-if height(nightData) < 3600
+if height(dataAll) < 3600
     warning('Not enough nighttime data.');
     return;
 end
 
-valid = isfinite(nightData.X) & isfinite(nightData.Y) & isfinite(nightData.Z);
-nightData = nightData(valid, :);
+valid = isfinite(dataAll.X) & isfinite(dataAll.Y) & isfinite(dataAll.Z);
+dataAll = dataAll(valid, :);
 
-timestamps = nightData.timestamps;
-X = nightData.X;
-Y = nightData.Y;
-Z = nightData.Z;
+X = dataAll.X; Y = dataAll.Y; Z = dataAll.Z;
+timestamps = dataAll.timestamps;
 G = hypot(X, Y);
 
 %% STEP 3: PRA Calculation
@@ -94,53 +92,35 @@ for s = 1:step:(length(Z) - winLen + 1)
     ctr(end+1) = c;              %#ok<AGROW>
 end
 
-if isempty(S_Z)
-    warning('No valid PSD segments.');
-    return;
-end
-
 PRA = S_Z ./ (S_G + eps);
-tBase = timestamps(1);
-tUTC = tBase + seconds(ctr - 1);
+tUTC = timestamps(1) + seconds(ctr - 1);
 
-%% STEP 4: Update Threshold File (TXT)
+%% STEP 4: Threshold File (.txt)
+todayClean = datetime(year(today), month(today), day(today));
 todayThr = mean(PRA, 'omitnan') + 2*std(PRA, 'omitnan');
 
-% Remove timezone from 'today' datetime
-todayNoTZ = datetime(year(today), month(today), day(today)); % Just date
-
-% If file exists, load history
 if exist(thresholdFile, 'file')
     T = readtable(thresholdFile, 'Delimiter', '\t');
 else
     T = table('Size', [0 2], 'VariableTypes', ["datetime", "double"], 'VariableNames', ["Date", "Threshold"]);
 end
 
-% Append today's new threshold
-newEntry = table(todayNoTZ, todayThr, 'VariableNames', ["Date", "Threshold"]);
+newEntry = table(todayClean, todayThr, 'VariableNames', ["Date", "Threshold"]);
 T = [T; newEntry];
-
-% Save updated threshold file
 writetable(T, thresholdFile, 'Delimiter', '\t');
 
-% Weighted Threshold Calculation
 n = height(T);
 if n >= 3
-    recent = T.Threshold(end-2:end);
-    weights = [0.2; 0.2; 0.6];
+    recent = T.Threshold(end-2:end); weights = [0.2; 0.2; 0.6];
 elseif n == 2
-    recent = T.Threshold(end-1:end);
-    weights = [0.2; 0.8];
+    recent = T.Threshold(end-1:end); weights = [0.2; 0.8];
 else
-    recent = T.Threshold(end);
-    weights = 1;
+    recent = T.Threshold(end); weights = 1;
 end
 thr = sum(recent .* weights) / sum(weights);
-
-% Detect anomalies
 anomalyIdx = PRA > thr;
 
-%% STEP 5: Plot PRA and PSD
+%% STEP 5: Plot PRA and PSD (fix axis range)
 figFile = fullfile(figFolder, sprintf('PRA_%s.png', datestr(today,'yyyymmdd')));
 figure('visible', 'off');
 
@@ -148,21 +128,22 @@ subplot(2,1,1);
 plot(tUTC, PRA, 'k-', 'LineWidth', 1.2); hold on;
 yline(thr, '--r', 'Threshold');
 scatter(tUTC(anomalyIdx), PRA(anomalyIdx), 'ro', 'filled');
-xlabel('Time (Local)');
-ylabel('PRA');
+xlabel('Time (Local)'); ylabel('PRA');
 title(sprintf('PRA - %s Nighttime', stationCode));
 grid on;
 datetick('x','HH:MM');
+startTime = datetime(today - days(1) + hours(20), 'TimeZone', 'Asia/Tokyo');
+endTime   = datetime(today + hours(4), 'TimeZone', 'Asia/Tokyo');
+xlim([startTime endTime]);
 
 subplot(2,1,2);
 plot(tUTC, S_Z, 'b-', 'LineWidth', 1.2); hold on;
 plot(tUTC, S_G, 'g--', 'LineWidth', 1.2);
-xlabel('Time (Local)');
-ylabel('Power');
-legend('S_Z','S_G');
-title('Power Spectral Density');
+xlabel('Time (Local)'); ylabel('Power');
+legend('S_Z','S_G'); title('Power Spectral Density');
 grid on;
 datetick('x','HH:MM');
+xlim([startTime endTime]);
 
 saveas(gcf, figFile);
 
@@ -176,7 +157,7 @@ PRA_Result.thr = thr;
 PRA_Result.anomalyIdx = anomalyIdx;
 save(resultFile, 'PRA_Result');
 
-% Save anomaly status
+%% STEP 7: Anomaly Log
 txtFile = fullfile(outFolder, 'anomaly_detected.txt');
 fid = fopen(txtFile, 'w');
 if any(anomalyIdx)
@@ -187,7 +168,7 @@ else
 end
 fclose(fid);
 
-%% STEP 7: Clean up raw IAGA files
+%% STEP 8: Clean up raw IAGA files
 iagaFiles = dir(fullfile(outFolder, '*.iaga2002'));
 for k = 1:length(iagaFiles)
     delete(fullfile(outFolder, iagaFiles(k).name));
@@ -195,7 +176,6 @@ end
 
 fprintf('✅ PRA Nighttime Analysis Completed\n');
 
-% STEP 8: Update README
+% Final: Update README
 updateReadme();
-
 end
