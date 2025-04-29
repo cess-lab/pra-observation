@@ -110,8 +110,8 @@ if exist(thresholdFile, 'file')
 else
     T = table('Size', [0 2], 'VariableTypes', ["datetime", "double"], 'VariableNames', ["Date", "Threshold"]);
 end
-
-T = [T; table(todayClean, todayThr)];
+newRow = table(todayClean, todayThr, 'VariableNames', T.Properties.VariableNames);
+T = [T; newRow];
 writetable(T, thresholdFile, 'Delimiter', '\t');
 
 n = height(T);
