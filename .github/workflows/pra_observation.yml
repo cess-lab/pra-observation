@@ -18,11 +18,11 @@ jobs:
     - name: Install Octave
       run: |
         sudo apt-get update
-        sudo apt-get install -y octave
+        sudo apt-get install -y octave gnuplot
 
     - name: Run PRA Detection Script
       run: |
-        octave PRA_Nighttime.m
+        octave --no-gui --eval "PRA_Nighttime"
 
     - name: Commit and Push Results
       run: |
