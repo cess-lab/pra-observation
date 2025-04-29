@@ -18,7 +18,7 @@ if exist(PRAPlotPath, 'file')
     PRASection = [... 
         "## Daily PRA Nighttime Analysis  ";
         "  ";
-        sprintf("> Date analyzed: %s (Japan Local Time)", datestr(datetime('now', 'TimeZone', 'Asia/Tokyo'), 'dd MMM yyyy'));
+        sprintf("> Date analyzed: %s (Japan Local Time)", string(datetime('now', 'TimeZone', 'Asia/Tokyo', 'Format', 'dd MMM yyyy')));
         "  ";
         sprintf('![PRA Nighttime Plot](%s)', PRAPlotURL);
         "  "];
