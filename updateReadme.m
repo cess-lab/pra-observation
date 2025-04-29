@@ -1,53 +1,45 @@
-function updateReadme()
-%% Update README.md with today's PRA Nighttime plot only
-clc;
+function updateReadme
+% UPDATE README.MD WITH LATEST PRA FIGURE
+fprintf('🔄 Updating README.md with PRA figure...\n');
 
-% --- Top Section ---
-TopString = [... 
-    "## Continuous Monitoring of Nighttime Polarization Ratio Anomalies (PRA)";
-    "  ";
-    compose("> Last updated on: %s (UTC)", datetime('now', Format = 'dd MMMM yyyy, hh:mm aa', TimeZone = 'UTC'));
-    "  "];
+% Get today's date (Tokyo time)
+tz = 'Asia/Tokyo';
+today = datetime('now', 'TimeZone', tz);
+todayStr = datestr(today, 'yyyy-mm-dd');
+todayFile = sprintf('PRA_%s.png', datestr(today, 'yyyymmdd'));
+figurePath = fullfile('INTERMAGNET_DOWNLOADS', 'figures', todayFile);
 
-% --- PRA Nighttime Plot Section ---
-todayDateStr = datestr(datetime('now', 'TimeZone', 'Asia/Tokyo'), 'yyyymmdd');
-PRAPlotPath = fullfile('INTERMAGNET_DOWNLOADS', 'figures', sprintf('PRA_%s.png', todayDateStr));
-
-if exist(PRAPlotPath, 'file')
-    PRAPlotURL = replace(PRAPlotPath, ' ', '%20'); % URL-safe
-    PRASection = [... 
-        "## Daily PRA Nighttime Analysis  ";
-        "  ";
-        sprintf("> Date analyzed: %s (Japan Local Time)", string(datetime('now', 'TimeZone', 'Asia/Tokyo', 'Format', 'dd MMM yyyy')));
-        "  ";
-        sprintf('![PRA Nighttime Plot](%s)', PRAPlotURL);
-        "  "];
-else
-    PRASection = ["## Daily PRA Nighttime Analysis  "; "*No PRA plot available for today.*  "; "  "];
+if ~isfile(figurePath)
+    warning('❌ PRA figure not found: %s', figurePath);
+    return;
 end
 
-% --- Bottom Section ---
-BottomString = [... 
+% Convert for URL-friendly path
+imageURL = strrep(figurePath, ' ', '%20');
+
+%% Build README content
+lines = [
+    "## Daily PRA Nighttime Detection";
+    "";
+    sprintf("> Last updated on: %s (Japan Local Time)", datestr(today, 'dd mmm yyyy, HH:MM'));
+    "";
+    sprintf("![Latest PRA Plot](%s)", imageURL);
+    "";
     "---";
-    "  ";
     "### About This Project";
-    "  ";
-    "This system automatically:";
-    "1. downloads geomagnetic field data from [INTERMAGNET](https://www.intermagnet.org/data-donnee/download-eng.php) stations,";
-    "2. processes the nighttime data (20:00–04:00 LT) to calculate the Polarization Ratio (PRA),";
-    "3. identifies anomalies based on dynamically updated thresholding, and";
-    "4. updates the detection results and figures into this repository automatically.";
-    "  ";
-    "Nighttime window analysis is performed daily around 03:00 AM Japan Standard Time (UTC+9).";
-    "  ";
-    "### Contributor";
-    "  ";
-    "- [Nur Syaiful Afrizal](https://github.com/syaifulafrizal)"];
+    "This repository provides automated daily analysis of nighttime geomagnetic field data";
+    "from the Kakioka observatory (KAK) using the Polarization Ratio Analysis (PRA) method.";
+    "";
+    "- Detection Time Window: 20:00–04:00 (Local Time)";
+    "- Frequency Band: 0.01–0.05 Hz";
+    "- Anomalies flagged when PRA > threshold";
+    "- Threshold calculated based on weighted mean of recent days";
+    "";
+    "### Author";
+    "- [Khairul Adib Yusof](https://github.com/syaifulafrizal)";
+];
 
-% --- Combine and Write to README ---
-FullString = [TopString; PRASection; BottomString];
-writelines(FullString, 'README.md');
-
+% Write to README.md
+writelines(lines, 'README.md');
 fprintf('✅ README.md successfully updated.\n');
-
 end
