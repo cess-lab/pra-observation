@@ -160,3 +160,9 @@ else
     fclose(fid);
 end
 
+% STEP 6: Clean up .iaga2002 raw files
+iagaFiles = dir(fullfile(outFolder, '*.iaga2002'));
+for k = 1:length(iagaFiles)
+    delete(fullfile(outFolder, iagaFiles(k).name));
+end
+
