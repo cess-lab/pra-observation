@@ -27,15 +27,21 @@ jobs:
 
     - name: Commit and Push Results
       run: |
-        git config --global user.name 'syaifulafrizal'
-        git config --global user.email 'syaifulafrizal@gmail.com'
-        if ls INTERMAGNET_DOWNLOADS/**/*.mat INTERMAGNET_DOWNLOADS/**/*.png INTERMAGNET_DOWNLOADS/**/*.txt README.md 1> /dev/null 2>&1; then
-          git add INTERMAGNET_DOWNLOADS/**/*.mat INTERMAGNET_DOWNLOADS/**/*.png INTERMAGNET_DOWNLOADS/**/*.txt README.md
-          git commit -m "📡 Daily PRA and Threshold update" || echo "No changes to commit"
-          git push
-        else
-          echo "⚠️ No new output files to add."
-        fi
+        git config --global user.name 'github-actions[bot]'
+        git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+    
+        # Force add updated important files
+        git add README.md
+        git add INTERMAGNET_DOWNLOADS/*.mat || true
+        git add INTERMAGNET_DOWNLOADS/*.png || true
+        git add INTERMAGNET_DOWNLOADS/*.txt || true
+
+        git status
+
+        # Try committing
+        git commit -m "📡 Daily PRA update and Threshold tracking" || echo "⚠️ No changes to commit"
+        git push
+
 
     - name: Display PRA Plot in Summary
       run: |
