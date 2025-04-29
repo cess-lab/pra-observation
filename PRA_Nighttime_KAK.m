@@ -1,4 +1,5 @@
-%% NIGHTTIME PRA DETECTION (MATLAB Version with Baseline Updating)
+function PRA_Nighttime_KAK
+%% NIGHTTIME PRA DETECTION (MATLAB Version with Weighted Threshold Updating)
 clc; clear; close all;
 
 %% Setup
@@ -47,7 +48,8 @@ for d = 1:2
     rawData = textscan(fid, '%s %s %f %f %f %f %f', 'HeaderLines', 26);
     fclose(fid);
 
-    timestamps = datetime(strcat(rawData{1}, {' '}, rawData{2}), 'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS', 'TimeZone', 'Asia/Tokyo');
+    timestamps = datetime(strcat(rawData{1}, {' '}, rawData{2}), ...
+        'InputFormat', 'yyyy-MM-dd HH:mm:ss.SSS', 'TimeZone', 'Asia/Tokyo');
     X = rawData{4}; Y = rawData{5}; Z = rawData{6};
 
     dataAll = [dataAll; table(timestamps, X, Y, Z)];
@@ -100,22 +102,44 @@ PRA = S_Z ./ (S_G + eps);
 tBase = timestamps(1);
 tUTC = tBase + seconds(ctr - 1);
 
-%% STEP 4: Update Baseline and Recalculate Threshold
-baselineFile = fullfile(outFolder, 'PRA_Baseline.mat');
+%% STEP 4: Update PRA Thresholds (Weighted)
+thresholdFile = fullfile(outFolder, 'PRA_Thresholds.mat');
 
-if isfile(baselineFile)
-    loaded = load(baselineFile);
-    allPRA = loaded.allPRA;
+if isfile(thresholdFile)
+    loaded = load(thresholdFile);
+    thresholdHistory = loaded.thresholdHistory;
+    thresholdDates = loaded.thresholdDates;
 else
-    allPRA = [];
+    thresholdHistory = [];
+    thresholdDates = [];
 end
 
-% Append today's PRA
-allPRA = [allPRA; PRA(:)];
-save(baselineFile, 'allPRA');
+% Today's threshold (simple mean + 2*std from today's PRA)
+todayThr = mean(PRA, 'omitnan') + 2*std(PRA, 'omitnan');
 
-% Calculate smarter threshold
-thr = mean(allPRA) + 2 * std(allPRA);
+% Update threshold history
+thresholdHistory = [thresholdHistory; todayThr];
+thresholdDates = [thresholdDates; today];
+
+% Save back updated
+save(thresholdFile, 'thresholdHistory', 'thresholdDates');
+
+% --- Now compute Weighted Threshold ---
+n = numel(thresholdHistory);
+
+if n >= 3
+    % last 3 days (today + 2 days)
+    recentThr = thresholdHistory(end-2:end);
+    weights = [0.2; 0.2; 0.6];
+    thr = sum(recentThr .* weights) / sum(weights);
+elseif n == 2
+    recentThr = thresholdHistory(end-1:end);
+    weights = [0.2; 0.8];
+    thr = sum(recentThr .* weights) / sum(weights);
+else
+    % only today available
+    thr = thresholdHistory(end);
+end
 
 % Detect anomalies
 anomalyIdx = PRA > thr;
@@ -174,3 +198,8 @@ for k = 1:length(iagaFiles)
 end
 
 fprintf('✅ PRA Nighttime Analysis Completed\n');
+
+% Final: Update README
+updateReadme(); % Call updateReadme() automatically!
+
+end
