@@ -142,3 +142,21 @@ PRA_Result.S_G = S_G;
 PRA_Result.thr = thr;
 PRA_Result.anomalyIdx = anomalyIdx;
 save(fullfile(outFolder, sprintf('PRA_Night_%s.mat', datestr(today, 'yyyymmdd'))), 'PRA_Result');
+
+% Save figure
+figFolder = fullfile(outFolder, 'figures');
+if ~exist(figFolder, 'dir'), mkdir(figFolder); end
+saveas(gcf, fullfile(figFolder, sprintf('PRA_%s.png', datestr(today,'yyyymmdd'))));
+
+% Save anomaly flag separately
+if any(anomalyIdx)
+    fid = fopen(fullfile(outFolder, 'anomaly_detected.txt'), 'w');
+    fprintf(fid, 'Anomaly detected at:\n');
+    fprintf(fid, '%s\n', string(tUTC(anomalyIdx)));
+    fclose(fid);
+else
+    fid = fopen(fullfile(outFolder, 'anomaly_detected.txt'), 'w');
+    fprintf(fid, 'No anomaly detected.\n');
+    fclose(fid);
+end
+
