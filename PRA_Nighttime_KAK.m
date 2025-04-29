@@ -1,4 +1,3 @@
-function PRA_Nighttime_KAK
 %% NIGHTTIME PRA DETECTION (MATLAB Version with Baseline Updating)
 clc; clear; close all;
 
@@ -175,5 +174,3 @@ for k = 1:length(iagaFiles)
 end
 
 fprintf('✅ PRA Nighttime Analysis Completed\n');
-
-end
