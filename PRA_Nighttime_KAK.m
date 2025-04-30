@@ -163,11 +163,12 @@ PRA_Result = struct('tUTC', tUTC, 'PRA', PRA, 'S_Z', S_Z, 'S_G', S_G, ...
                     'thr', thr, 'anomalyIdx', anomalyIdx);
 save(resultFile, 'PRA_Result');
 
-txtFile = fullfile(outFolder, 'anomaly_detected.txt');
-fid = fopen(txtFile, 'w');
+logFile = fullfile(outFolder, 'anomaly_master_log.txt');
+fid = fopen(logFile, 'a');  % 'a' = append mode
+
+fprintf(fid, '[%s] ', datestr(today, 'yyyy-mm-dd'));
 if any(anomalyIdx)
-    fprintf(fid, 'Anomaly detected at:\n');
-    fprintf(fid, '%s\n', string(tUTC(anomalyIdx)));
+    fprintf(fid, 'Anomaly detected at: %s\n', strjoin(string(tUTC(anomalyIdx)), ', '));
 else
     fprintf(fid, 'No anomaly detected.\n');
 end
