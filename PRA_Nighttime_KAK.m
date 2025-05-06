@@ -171,9 +171,33 @@ if any(anomalyIdx)
     S_Z_vals = sprintf('%.2e, ', S_Z(anomalyIdx)); S_Z_vals = strip(S_Z_vals(1:end-2));
     S_G_vals = sprintf('%.2e, ', S_G(anomalyIdx)); S_G_vals = strip(S_G_vals(1:end-2));
 
-    remarks = "Anomalies due to low $S_G$ instead of high $S_Z$";
-    newRow = table({rangeStr}, thr, {PRA_vals}, {S_Z_vals}, {S_G_vals}, {remarks}, ...
-        'VariableNames', {'Range','Threshold','PRA','SZ','SG','Remarks'});
+    % Determine time blocks
+    tLocal = datetime(tUTC,'TimeZone','UTC'); tLocal.TimeZone = tz;
+    anomalyTimes = tLocal(anomalyIdx);
+    blocks = unique(dateshift(anomalyTimes,'start','hour'));
+    blockStr = strjoin(arrayfun(@(b) sprintf('%s–%s', datestr(b,'HH:MM'), datestr(b+hours(1),'HH:MM')), blocks, 'UniformOutput', false), ', ');
+
+    % Determine peak-based remark
+    idxs = find(anomalyIdx);
+    [~, iMax] = max(PRA(idxs));
+    idxMax = idxs(iMax);
+    prevIdx = idxMax - 1;
+    if prevIdx < 1
+        remarks = "Unable to determine cause (no prior sample)";
+    else
+        dG = S_G(idxMax) - S_G(prevIdx);
+        dZ = S_Z(idxMax) - S_Z(prevIdx);
+        if dG < 0 && abs(dG) > abs(dZ)
+            remarks = "Anomalies due to drop in S_G";
+        elseif dZ > 0 && abs(dZ) > abs(dG)
+            remarks = "Anomalies due to increase in S_Z";
+        else
+            remarks = "Anomalies mixed S_G/S_Z changes";
+        end
+    end
+
+    newRow = table({rangeStr}, thr, {PRA_vals}, {S_Z_vals}, {S_G_vals}, {remarks}, {blockStr}, ...
+        'VariableNames', {'Range','Threshold','PRA','SZ','SG','Remarks','Times'});
 
     if isfile(masterLog)
         old = readtable(masterLog, 'Delimiter','\t');
