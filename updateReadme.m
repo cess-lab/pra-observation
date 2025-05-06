@@ -26,30 +26,31 @@ header = [
     ""
 ];
 
-%% Section 2: Anomaly Table (Last 5 Days)
+%% Section 2: Anomaly Table (Last 5 Anomalies)
 logFile = fullfile('INTERMAGNET_DOWNLOADS', 'anomaly_master_log.txt');
 if isfile(logFile)
     T = readtable(logFile, 'Delimiter', '\t', 'TextType', 'string');
-    T = sortrows(T, 'ObservationRange', 'descend');
+    T = sortrows(T, 'Range', 'descend');  % Sort by Range (Observation window)
     if height(T) > 5, T = T(1:5,:); end
 
     % Markdown table header
     tableLines = [
-        "## Recent Anomaly Summary (Last 5 Days)";
+        "## Recent Anomaly Summary (Last 5 Anomalies)";
         "";
-        "| Observation range | PRA Threshold | Anomalous PRA values | $S_Z$ during anomalies | $S_G$ during anomalies | Remarks | Plots |";
-        "|-------------------|---------------|------------------------|------------------------|------------------------|---------|-------|"
+        "| Observation range | Anomaly Time(s) | PRA Threshold | Anomalous PRA values | $S_Z$ during anomalies | $S_G$ during anomalies | Remarks | Plots |";
+        "|-------------------|------------------|----------------|------------------------|------------------------|------------------------|---------|-------|"
     ];
 
     % Rows
     for i = 1:height(T)
-        tableLines(end+1) = sprintf("| %s | %.2f | %s | %s | %s | %s | <a href='%s'>📈</a> |", ...
-            T.ObservationRange(i), T.Threshold(i), T.AnomalousPRA(i), ...
-            T.S_Z(i), T.S_G(i), T.Remarks(i), T.Plot(i));
+        plotFile = sprintf("INTERMAGNET_DOWNLOADS/figures/PRA_%s.png", erase(T.Range(i), {'/', ' ', ':'}));
+        tableLines(end+1) = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | <a href='%s'>📈</a> |", ...
+            T.Range(i), T.Times(i), T.Threshold(i), T.PRA{i}, ...
+            T.SZ{i}, T.SG{i}, T.Remarks{i}, plotFile);
     end
 else
     tableLines = [
-        "## Recent Anomaly Summary (Last 5 Days)";
+        "## Recent Anomaly Summary (Last 5 Anomalies)";
         "";
         "_No anomalies logged yet._";
     ];
