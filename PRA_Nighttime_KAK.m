@@ -163,16 +163,27 @@ PRA_Result = struct('tUTC', tUTC, 'PRA', PRA, 'S_Z', S_Z, 'S_G', S_G, ...
                     'thr', thr, 'anomalyIdx', anomalyIdx);
 save(resultFile, 'PRA_Result');
 
-logFile = fullfile(outFolder, 'anomaly_master_log.txt');
-fid = fopen(logFile, 'a');  % 'a' = append mode
-
-fprintf(fid, '[%s] ', datestr(today, 'yyyy-mm-dd'));
+%% MASTER LOG UPDATE (Append to anomaly_master_log.txt)
 if any(anomalyIdx)
-    fprintf(fid, 'Anomaly detected at: %s\n', strjoin(string(tUTC(anomalyIdx)), ', '));
-else
-    fprintf(fid, 'No anomaly detected.\n');
+    masterLog = fullfile(outFolder, 'anomaly_master_log.txt');
+    rangeStr = sprintf('%s 20:00 - %s 04:00', datestr(today - 1, 'dd/mm/yyyy'), datestr(today, 'dd/mm/yyyy'));
+    PRA_vals = sprintf('%.2f, ', PRA(anomalyIdx)); PRA_vals = strip(PRA_vals(1:end-2));
+    S_Z_vals = sprintf('%.2e, ', S_Z(anomalyIdx)); S_Z_vals = strip(S_Z_vals(1:end-2));
+    S_G_vals = sprintf('%.2e, ', S_G(anomalyIdx)); S_G_vals = strip(S_G_vals(1:end-2));
+
+    remarks = "Anomalies due to low $S_G$ instead of high $S_Z$";
+    newRow = table({rangeStr}, thr, {PRA_vals}, {S_Z_vals}, {S_G_vals}, {remarks}, ...
+        'VariableNames', {'Range','Threshold','PRA','SZ','SG','Remarks'});
+
+    if isfile(masterLog)
+        old = readtable(masterLog, 'Delimiter','\t');
+        combined = [old; newRow];
+    else
+        combined = newRow;
+    end
+
+    writetable(combined, masterLog, 'Delimiter','\t');
 end
-fclose(fid);
 
 %% Step 7: Cleanup and README Update
 delete(fullfile(outFolder, '*.iaga2002'));
