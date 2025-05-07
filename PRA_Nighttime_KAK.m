@@ -167,13 +167,15 @@ if any(anomalyIdx)
         end
     end
 
-    rangeStr = sprintf('%s 20:00 - %s 04:00', datestr(today - 1, 'dd/mm/yyyy'), datestr(today, 'dd/mm/yyyy'));
+    rangeStr = string(sprintf('%s 20:00 - %s 04:00', datestr(today - 1, 'dd/mm/yyyy'), datestr(today, 'dd/mm/yyyy')));
     PRA_vals = join(string(round(PRA(anomalyIdx),2)), ', ');
     SZ_vals  = join(string(S_Z(anomalyIdx)), ', ');
     SG_vals  = join(string(S_G(anomalyIdx)), ', ');
-    plotFile = sprintf('PRA_%s.png', datestr(today, 'yyyymmdd'));
+    plotFile = string(sprintf('PRA_%s.png', datestr(today, 'yyyymmdd')));
+    blockStr = string(blockStr);
+    remark = string(remark);
 
-    newRow = table(string(rangeStr), todayThr, PRA_vals, SZ_vals, SG_vals, remark, blockStr, plotFile, ...
+    newRow = table(rangeStr, todayThr, PRA_vals, SZ_vals, SG_vals, remark, blockStr, plotFile, ...
         'VariableNames', {'Range','Threshold','PRA','SZ','SG','Remarks','Times','Plot'});
 
     if isfile(saveLogFile)
