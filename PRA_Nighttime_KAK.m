@@ -200,7 +200,14 @@ if any(anomalyIdx)
         'VariableNames', {'Range','Threshold','PRA','SZ','SG','Remarks','Times'});
 
     if isfile(masterLog)
-        old = readtable(masterLog, 'Delimiter','\t');
+        old = readtable(masterLog, 'Delimiter','\t', 'TextType','string');
+
+        % Align old table to newRow columns if needed
+        missingCols = setdiff(newRow.Properties.VariableNames, old.Properties.VariableNames);
+        for c = missingCols
+            old.(c{1}) = ""; % fill missing columns with empty strings
+        end
+        old = movevars(old, newRow.Properties.VariableNames); % reorder columns to match
         combined = [old; newRow];
     else
         combined = newRow;
