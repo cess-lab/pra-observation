@@ -199,20 +199,24 @@ if any(anomalyIdx)
     newRow = table({rangeStr}, thr, {PRA_vals}, {S_Z_vals}, {S_G_vals}, {remarks}, {blockStr}, ...
         'VariableNames', {'Range','Threshold','PRA','SZ','SG','Remarks','Times'});
 
-    if isfile(masterLog)
-        old = readtable(masterLog, 'Delimiter','\t', 'TextType','string');
-        % Align old table to match newRow
-        missingCols = setdiff(newRow.Properties.VariableNames, old.Properties.VariableNames);
-        for c = missingCols
-            old.(c{1}) = repmat("", height(old), 1); % fill missing column with blanks
-        end
+    old = readtable(masterLog, 'Delimiter','\t', 'TextType','string');
 
-        % Reorder columns to match newRow
-        old = movevars(old, newRow.Properties.VariableNames, 'Before', 1);
-        combined = [old; newRow];
-    else
-        combined = newRow;
+    % --- Align old to newRow ---
+    % Add any missing columns to old
+    missingInOld = setdiff(newRow.Properties.VariableNames, old.Properties.VariableNames);
+    for c = missingInOld
+        old.(c{1}) = repmat("", height(old), 1);
     end
+
+    % Add any missing columns to newRow
+    missingInNew = setdiff(old.Properties.VariableNames, newRow.Properties.VariableNames);
+    for c = missingInNew
+        newRow.(c{1}) = "";
+    end
+
+    % Reorder columns identically
+    old = old(:, newRow.Properties.VariableNames);
+    combined = [old; newRow];
 
     writetable(combined, masterLog, 'Delimiter','\t');
 end
