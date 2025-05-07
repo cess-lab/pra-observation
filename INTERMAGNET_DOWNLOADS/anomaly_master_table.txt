@@ -1,0 +1,2 @@
+Range	Threshold	PRA	SZ	SG	Remarks	Times	Plot
+06/05/2025 20:00 - 07/05/2025 04:00	5.16319312301215	5.6	86.037	15.3768	Anomalies due to drop in S_G	22:00–23:00	PRA_20250507.png
