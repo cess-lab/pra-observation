@@ -40,8 +40,20 @@ if isfile(logFile)
     ];
 
     for i = 1:height(T)
+        % Format numerical series to human-readable string (avoid NaN from multiple entries)
+        praVal = T.PRA(i); szVal = T.SZ(i); sgVal = T.SG(i);
+        if contains(praVal, ",")
+            praVal = strrep(praVal, ", ", "<br>");
+        end
+        if contains(szVal, ",")
+            szVal = strrep(szVal, ", ", "<br>");
+        end
+        if contains(sgVal, ",")
+            sgVal = strrep(sgVal, ", ", "<br>");
+        end
+
         tableLines(end+1) = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
-            T.Range(i), T.Times(i), T.Threshold(i), T.PRA(i), T.SZ(i), T.SG(i), T.Remarks(i), T.Plot(i));
+            T.Range(i), T.Times(i), T.Threshold(i), praVal, szVal, sgVal, T.Remarks(i), T.Plot(i));
     end
 else
     tableLines = [
