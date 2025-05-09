@@ -152,20 +152,26 @@ if any(anomalyIdx)
     blockStr = strjoin(arrayfun(@(b) sprintf('%s–%s', datestr(b,'HH:MM'), datestr(b+hours(1),'HH:MM')), blocks, 'UniformOutput', false), ', ');
 
     idxs = find(anomalyIdx);
-    [~, iMax] = max(PRA(idxs)); idxMax = idxs(iMax); prevIdx = idxMax - 1;
-    if prevIdx < 1
-        remark = "Unable to determine cause (no prior sample)";
-    else
-        dG = S_G(idxMax) - S_G(prevIdx);
-        dZ = S_Z(idxMax) - S_Z(prevIdx);
+    remarks = strings(1, numel(idxs));
+
+    for j = 1:numel(idxs)
+        idx = idxs(j);
+        if idx == 1
+            remarks(j) = "No prior data";
+            continue;
+        end
+        dG = S_G(idx) - S_G(idx - 1);
+        dZ = S_Z(idx) - S_Z(idx - 1);
         if dG < 0 && abs(dG) > abs(dZ)
-            remark = "Anomalies due to drop in S_G";
+            remarks(j) = "Anomaly due to drop in S_G";
         elseif dZ > 0 && abs(dZ) > abs(dG)
-            remark = "Anomalies due to increase in S_Z";
+            remarks(j) = "Anomaly due to increase in S_Z";
         else
-            remark = "Anomalies mixed S_G/S_Z changes";
+            remarks(j) = "Anomaly mixed S_G/S_Z change";
         end
     end
+
+    remark = strjoin(remarks, ', ');
 
     rangeStr = string(sprintf('%s 20:00 - %s 04:00', datestr(today - 1, 'dd/mm/yyyy'), datestr(today, 'dd/mm/yyyy')));
     PRA_vals = join(string(round(PRA(anomalyIdx),2)), ', ');
