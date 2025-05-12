@@ -55,8 +55,9 @@ if isfile(logFile)
         sgStr  = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), sgVals, 'UniformOutput', false), '<br>');
         remStr = strjoin(strtrim(remVals), '<br>');
 
-        tableLines{end+1} = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
-            T.Range(i), T.Times(i), T.Threshold(i), praStr, szStr, sgStr, remStr, T.Plot(i));
+        rowLine = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
+            T.Range(i), T.Times(i), double(T.Threshold(i)), praStr, szStr, sgStr, remStr, T.Plot(i));
+        tableLines{end+1} = rowLine;
     end
 else
     tableLines = {
