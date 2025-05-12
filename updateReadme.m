@@ -23,9 +23,9 @@ timestamp = datetime('now','TimeZone','Asia/Tokyo');
 header = {
     "## Daily PRA Nighttime Detection";
     "";
-    sprintf("> Last updated on: %s (Japan Local Time)", datestr(timestamp, 'dd mmm yyyy, HH:MM'));
+    ["> Last updated on: " datestr(timestamp, 'dd mmm yyyy, HH:MM') " (Japan Local Time)"];
     "";
-    sprintf("![Latest PRA Plot](%s)", imageURL);
+    ["![Latest PRA Plot](" imageURL ")"];
     ""
 };
 
@@ -45,10 +45,10 @@ if isfile(logFile)
     };
 
     for i = 1:height(T)
-        praVals = strsplit(T.PRA(i), ',');
-        szVals  = strsplit(T.SZ(i), ',');
-        sgVals  = strsplit(T.SG(i), ',');
-        remVals = strsplit(T.Remarks(i), ',');
+        praVals = strsplit(T.PRA{i}, ',');
+        szVals  = strsplit(T.SZ{i}, ',');
+        sgVals  = strsplit(T.SG{i}, ',');
+        remVals = strsplit(T.Remarks{i}, ',');
 
         praStr = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), praVals, 'UniformOutput', false), '<br>');
         szStr  = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), szVals, 'UniformOutput', false), '<br>');
@@ -56,7 +56,7 @@ if isfile(logFile)
         remStr = strjoin(strtrim(remVals), '<br>');
 
         rowLine = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
-            T.Range(i), T.Times(i), double(T.Threshold(i)), praStr, szStr, sgStr, remStr, T.Plot(i));
+            T.Range{i}, T.Times{i}, str2double(T.Threshold{i}), praStr, szStr, sgStr, remStr, T.Plot{i});
         tableLines{end+1} = rowLine;
     end
 else
