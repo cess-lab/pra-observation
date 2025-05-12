@@ -22,7 +22,8 @@ imageURL = strrep(figurePath, ' ', '%20');
 header = [
     "## Daily PRA Nighttime Detection";
     "";
-    sprintf("> Last updated on: %s (Japan Local Time)", datestr(now(tz), 'dd mmm yyyy, HH:MM'));
+    timestamp = datetime('now','TimeZone','Asia/Tokyo');
+sprintf("> Last updated on: %s (Japan Local Time)", datestr(timestamp, 'dd mmm yyyy, HH:MM'));
     "";
     sprintf("![Latest PRA Plot](%s)", imageURL);
     ""
