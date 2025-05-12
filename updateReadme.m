@@ -4,14 +4,17 @@ fprintf('🔄 Updating README.md with PRA figure and anomaly table...\n');
 
 % Setup
 tz = 'Asia/Tokyo';
-today = datetime('now', 'TimeZone', tz);
-todayFile = sprintf('PRA_%s.png', datestr(today, 'yyyymmdd'));
-figurePath = fullfile('INTERMAGNET_DOWNLOADS', 'figures', todayFile);
-
-if ~isfile(figurePath)
-    warning('❌ PRA figure not found: %s', figurePath);
+figDir = fullfile('INTERMAGNET_DOWNLOADS', 'figures');
+files = dir(fullfile(figDir, 'PRA_*.png'));
+if isempty(files)
+    warning('❌ No PRA figure found.');
     return;
 end
+
+[~, idx] = max([files.datenum]);
+latestFile = files(idx).name;
+figurePath = fullfile(figDir, latestFile);
+todayFile = latestFile;
 
 imageURL = strrep(figurePath, ' ', '%20');
 
@@ -19,7 +22,7 @@ imageURL = strrep(figurePath, ' ', '%20');
 header = [
     "## Daily PRA Nighttime Detection";
     "";
-    sprintf("> Last updated on: %s (Japan Local Time)", datestr(today, 'dd mmm yyyy, HH:MM'));
+    sprintf("> Last updated on: %s (Japan Local Time)", datestr(now(tz), 'dd mmm yyyy, HH:MM'));
     "";
     sprintf("![Latest PRA Plot](%s)", imageURL);
     ""
@@ -30,7 +33,7 @@ logFile = fullfile('INTERMAGNET_DOWNLOADS', 'anomaly_master_table.txt');
 if isfile(logFile)
     T = readtable(logFile, 'Delimiter', '\t', 'TextType', 'string');
     T = sortrows(T, 'Range', 'descend');
-    T = T(~cellfun(@isempty, T.PRA), :); % ensure only entries with anomaly values
+    T = T(~cellfun(@isempty, T.PRA), :);
     if height(T) > 5, T = T(1:5,:); end
 
     tableLines = [
@@ -83,6 +86,6 @@ footer = [
 
 %% Combine and Write README
 finalText = [header; tableLines; footer];
-writelines(finalText, 'README.md');
+writelines(cellstr(finalText), 'README.md');
 fprintf('✅ README.md successfully updated.\n');
 end
