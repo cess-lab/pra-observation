@@ -17,6 +17,7 @@ outFolder = fullfile(pwd, 'INTERMAGNET_DOWNLOADS');
 figFolder = fullfile(outFolder, 'figures');
 threshFile = fullfile(outFolder, 'PRA_Thresholds.txt');
 saveLogFile = fullfile(outFolder, 'anomaly_master_table.txt');
+cumMatFile = fullfile(outFolder, 'PRA_all_results.mat');
 
 if ~exist(outFolder, 'dir'), mkdir(outFolder); end
 if ~exist(figFolder, 'dir'), mkdir(figFolder); end
@@ -141,10 +142,25 @@ plot(tUTC, S_Z, 'b-', tUTC, S_G, 'g--', 'LineWidth', 1.2);
 xlabel('Time'); ylabel('Power'); legend('S_Z','S_G'); grid on;
 saveas(gcf, figFile);
 
-%% Step 6: Save Outputs
-save(fullfile(outFolder, sprintf('PRA_Night_%s.mat', datestr(today,'yyyymmdd'))), 'PRA', 'S_Z', 'S_G', 'thr', 'tUTC', 'anomalyIdx');
+%% Step 6: Save to Cumulative .mat File
+if isfile(cumMatFile)
+    load(cumMatFile, 'Results');
+else
+    Results = struct('date', [], 'tUTC', [], 'PRA', [], 'S_Z', [], 'S_G', [], 'thr', [], 'anomalyIdx', []);
+end
 
-%% Step 7: Append to New Table-Based Master Log
+entry.date = todayClean;
+entry.tUTC = tUTC;
+entry.PRA = PRA;
+entry.S_Z = S_Z;
+entry.S_G = S_G;
+entry.thr = thr;
+entry.anomalyIdx = anomalyIdx;
+
+Results(end+1) = entry;
+save(cumMatFile, 'Results');
+
+%% Step 7: Append to anomaly_master_table.txt if anomaly
 if any(anomalyIdx)
     tLocal = datetime(tUTC,'TimeZone','UTC'); tLocal.TimeZone = tz;
     anomalyTimes = tLocal(anomalyIdx);
@@ -153,7 +169,6 @@ if any(anomalyIdx)
 
     idxs = find(anomalyIdx);
     remarks = strings(1, numel(idxs));
-
     for j = 1:numel(idxs)
         idx = idxs(j);
         if idx == 1
@@ -171,15 +186,13 @@ if any(anomalyIdx)
         end
     end
 
-    remark = strjoin(remarks, ', ');
-
     rangeStr = string(sprintf('%s 20:00 - %s 04:00', datestr(today - 1, 'dd/mm/yyyy'), datestr(today, 'dd/mm/yyyy')));
     PRA_vals = join(string(round(PRA(anomalyIdx),2)), ', ');
     SZ_vals  = join(string(S_Z(anomalyIdx)), ', ');
     SG_vals  = join(string(S_G(anomalyIdx)), ', ');
     plotFile = string(sprintf('PRA_%s.png', datestr(today, 'yyyymmdd')));
     blockStr = string(blockStr);
-    remark = string(remark);
+    remark = string(strjoin(remarks, ', '));
 
     newRow = table(rangeStr, todayThr, PRA_vals, SZ_vals, SG_vals, remark, blockStr, plotFile, ...
         'VariableNames', {'Range','Threshold','PRA','SZ','SG','Remarks','Times','Plot'});
