@@ -17,13 +17,13 @@ figurePath = fullfile(figDir, latestFile);
 todayFile = latestFile;
 
 imageURL = strrep(figurePath, ' ', '%20');
+timestamp = datetime('now','TimeZone','Asia/Tokyo');
 
 %% Section 1: PRA Figure Section
 header = [
     "## Daily PRA Nighttime Detection";
     "";
-    timestamp = datetime('now','TimeZone','Asia/Tokyo');
-sprintf("> Last updated on: %s (Japan Local Time)", datestr(timestamp, 'dd mmm yyyy, HH:MM'));
+    sprintf("> Last updated on: %s (Japan Local Time)", datestr(timestamp, 'dd mmm yyyy, HH:MM'));
     "";
     sprintf("![Latest PRA Plot](%s)", imageURL);
     ""
