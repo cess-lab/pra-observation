@@ -20,14 +20,14 @@ imageURL = strrep(figurePath, ' ', '%20');
 timestamp = datetime('now','TimeZone','Asia/Tokyo');
 
 %% Section 1: PRA Figure Section
-header = [
+header = {
     "## Daily PRA Nighttime Detection";
     "";
     sprintf("> Last updated on: %s (Japan Local Time)", datestr(timestamp, 'dd mmm yyyy, HH:MM'));
     "";
     sprintf("![Latest PRA Plot](%s)", imageURL);
     ""
-];
+};
 
 %% Section 2: Anomaly Table (Last 5 Anomalies)
 logFile = fullfile('INTERMAGNET_DOWNLOADS', 'anomaly_master_table.txt');
@@ -37,12 +37,12 @@ if isfile(logFile)
     T = T(~cellfun(@isempty, T.PRA), :);
     if height(T) > 5, T = T(1:5,:); end
 
-    tableLines = [
+    tableLines = {
         "## Recent Anomaly Summary (Last 5 Anomalies)";
         "";
         "| Observation range | Anomaly Time(s) | PRA Threshold | Anomalous PRA values | $S_Z$ during anomalies | $S_G$ during anomalies | Remarks | Plot |";
         "|-------------------|------------------|----------------|------------------------|------------------------|------------------------|---------|------|"
-    ];
+    };
 
     for i = 1:height(T)
         praVals = strsplit(T.PRA(i), ',');
@@ -55,19 +55,19 @@ if isfile(logFile)
         sgStr  = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), sgVals, 'UniformOutput', false), '<br>');
         remStr = strjoin(strtrim(remVals), '<br>');
 
-        tableLines(end+1) = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
+        tableLines{end+1} = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
             T.Range(i), T.Times(i), T.Threshold(i), praStr, szStr, sgStr, remStr, T.Plot(i));
     end
 else
-    tableLines = [
+    tableLines = {
         "## Recent Anomaly Summary (Last 5 Anomalies)";
         "";
         "_No anomalies logged yet._"
-    ];
+    };
 end
 
 %% Section 3: Footer
-footer = [
+footer = {
     "";
     "---";
     "### About This Project";
@@ -82,11 +82,11 @@ footer = [
     "- README updated automatically each day via GitHub Actions";
     "";
     "### Author";
-    "- [Nur Syaiful Afrizal](https://github.com/syaifulafrizal)";
-];
+    "- [Nur Syaiful Afrizal](https://github.com/syaifulafrizal)"
+};
 
 %% Combine and Write README
 finalText = [header; tableLines; footer];
-writelines(cellstr(finalText), 'README.md');
+writelines(finalText, 'README.md');
 fprintf('✅ README.md successfully updated.\n');
 end
