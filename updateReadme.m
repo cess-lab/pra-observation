@@ -71,10 +71,22 @@ try
         if height(S) > 5, S = S(1:5,:); end
 
         fprintf("[4] Processing %d consolidated rows...\n", height(S));
+
         for i = 1:height(S)
             try
+                rowRange  = string(S.Range(i));    if ismissing(rowRange),  rowRange = "(missing)"; end
+                rowTime   = string(S.Times(i));    if ismissing(rowTime),   rowTime = "-"; end
+                rowThresh = double(S.Threshold(i));
+
+                rowPRA    = string(S.PRA(i));      if ismissing(rowPRA),    rowPRA = "-"; end
+                rowSZ     = string(S.SZ(i));       if ismissing(rowSZ),     rowSZ = "-"; end
+                rowSG     = string(S.SG(i));       if ismissing(rowSG),     rowSG = "-"; end
+                rowRem    = string(S.Remarks(i));  if ismissing(rowRem),    rowRem = "-"; end
+                rowPlot   = string(S.Plot(i));     if ismissing(rowPlot),   rowPlot = "missing_plot.png"; end
+
                 rowLine = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
-                    string(S.Range(i)), string(S.Times(i)), double(S.Threshold(i)), S.PRA(i), S.SZ(i), S.SG(i), S.Remarks(i), S.Plot(i));
+                    rowRange, rowTime, rowThresh, rowPRA, rowSZ, rowSG, rowRem, rowPlot);
+
                 tableLines{end+1} = rowLine;
             catch rowErr
                 warning("⚠️ Failed to process row %d: %s", i, rowErr.message);
