@@ -4,6 +4,7 @@ fprintf('🔄 Updating README.md with PRA figure and anomaly table...\n');
 
 try
     %% Setup
+    fprintf("[1] Initializing figure setup...\n");
     tz = 'Asia/Tokyo';
     figDir = fullfile('INTERMAGNET_DOWNLOADS', 'figures');
     files = dir(fullfile(figDir, 'PRA_*.png'));
@@ -21,6 +22,7 @@ try
     timestamp = datetime('now','TimeZone','Asia/Tokyo');
 
     %% Section 1: PRA Figure Section
+    fprintf("[2] Preparing header section...\n");
     header = {
         "## Daily PRA Nighttime Detection";
         "";
@@ -31,6 +33,7 @@ try
     };
 
     %% Section 2: Anomaly Table (Last 5 Anomalies)
+    fprintf("[3] Reading anomaly log table...\n");
     logFile = fullfile('INTERMAGNET_DOWNLOADS', 'anomaly_master_table.txt');
     tableLines = {
         "## Recent Anomaly Summary (Last 5 Anomalies)";
@@ -44,6 +47,7 @@ try
         T = sortrows(T, 'Range', 'descend');
         if height(T) > 5, T = T(1:5,:); end
 
+        fprintf("[4] Processing %d rows from anomaly log...\n", height(T));
         for i = 1:height(T)
             try
                 praStr = ""; szStr = ""; sgStr = "";
@@ -76,6 +80,7 @@ try
     end
 
     %% Section 3: Footer
+    fprintf("[5] Appending footer info...\n");
     footer = {
         "";
         "---";
@@ -95,8 +100,9 @@ try
     };
 
     %% Combine and Write README
+    fprintf("[6] Writing README.md...\n");
     finalText = [header; tableLines; footer];
-    finalText = cellstr(string(finalText));
+    finalText = cellfun(@char, string(finalText), 'UniformOutput', false);
     writelines(finalText, 'README.md');
     fprintf('✅ README.md successfully updated.\n');
 
