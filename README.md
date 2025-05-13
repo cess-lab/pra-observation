@@ -1,15 +1,18 @@
 ## Daily PRA Nighttime Detection
 
-> Last updated on: 08 May 2025, 12:21 (Japan Local Time)
+> Last updated on: 13 May 2025, 17:04 (Japan Local Time)
 
-![Latest PRA Plot](INTERMAGNET_DOWNLOADS/figures/PRA_20250508.png)
+![Latest PRA Plot](INTERMAGNET_DOWNLOADS/figures/PRA_20250513.png)
 
 ## Recent Anomaly Summary (Last 5 Anomalies)
 
 | Observation range | Anomaly Time(s) | PRA Threshold | Anomalous PRA values | $S_Z$ during anomalies | $S_G$ during anomalies | Remarks | Plot |
 |-------------------|------------------|----------------|------------------------|------------------------|------------------------|---------|------|
-| 07/05/2025 20:00 - 08/05/2025 04:00 | 22:00–23:00, 23:00–00:00 | 34.43 | NaN | NaN | NaN | Anomalies mixed S_G/S_Z changes | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20250508.png) |
-| 06/05/2025 20:00 - 07/05/2025 04:00 | 22:00–23:00 | 5.16 | 5.600000e+00 | 8.603700e+01 | 1.537680e+01 | Anomalies due to drop in S_G | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20250507.png) |
+| 12/05/2025 20:00 - 13/05/2025 04:00 | 23:00–00:00 | 2.96 | 3.06 | 64.72 | 21.13 | Anomaly due to drop in S_G | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20250513.png) |
+| 12/05/2025 20:00 - 13/05/2025 04:00 | 23:00–00:00 | 2.96 | 3.06 | 64.72 | 21.13 | Anomaly due to drop in S_G | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20250513.png) |
+| 12/05/2025 20:00 - 13/05/2025 04:00 | 23:00–00:00 | 2.92 | 3.06 | 64.72 | 21.13 | Anomaly due to drop in S_G | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20250513.png) |
+| 12/05/2025 20:00 - 13/05/2025 04:00 | 23:00–00:00 | 2.92 | 3.06 | 64.72 | 21.13 | Anomaly due to drop in S_G | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20250513.png) |
+| 12/05/2025 20:00 - 13/05/2025 04:00 | 23:00–00:00 | 2.92 | 3.06 | 64.72 | 21.13 | Anomaly due to drop in S_G | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20250513.png) |
 
 ---
 ### About This Project
@@ -20,6 +23,8 @@ from the Kakioka observatory (KAK) using the Polarization Ratio Analysis (PRA) m
 - Frequency Band: 0.01–0.05 Hz
 - Anomalies flagged when PRA > threshold
 - Threshold calculated based on weighted mean of recent days
+- Results stored in a cumulative `.mat` file for long-term monitoring
+- README updated automatically each day via GitHub Actions
 
 ### Author
 - [Nur Syaiful Afrizal](https://github.com/syaifulafrizal)
