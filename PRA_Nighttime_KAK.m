@@ -160,60 +160,66 @@ entry.anomalyIdx = anomalyIdx;
 Results(end+1) = entry;
 save(cumMatFile, 'Results');
 
-%% Step 7: Append to anomaly_master_table.txt if anomaly
-if any(anomalyIdx)
-    tLocal = datetime(tUTC,'TimeZone','UTC'); tLocal.TimeZone = tz;
-    anomalyTimes = tLocal(anomalyIdx);
-    blocks = unique(dateshift(anomalyTimes,'start','hour'));
-    blockStr = strjoin(arrayfun(@(b) sprintf('%s–%s', datestr(b,'HH:MM'), datestr(b+hours(1),'HH:MM')), blocks, 'UniformOutput', false), ', ');
+%% Step 7: Log to anomaly_master_table.txt
+logFile = fullfile(outFolder, 'anomaly_master_table.txt');
 
+if any(anomalyIdx)
+    % Format output
+    rangeStr = sprintf('%s 20:00 - %s 04:00', ...
+        datestr(yesterday, 'dd/mm/yyyy'), datestr(today, 'dd/mm/yyyy'));
+    timeBlocks = unique(dateshift(datetime(tUTC(anomalyIdx)), 'start', 'hour'));
+    timeStrs = arrayfun(@(t) sprintf('%s–%s', datestr(t,'HH:MM'), datestr(t+hours(1),'HH:MM')), timeBlocks, 'UniformOutput', false);
+    timeStr = strjoin(timeStrs, ', ');
+
+    PRA_vals = arrayfun(@(v) sprintf('%.2f', v), PRA(anomalyIdx), 'UniformOutput', false);
+    SZ_vals  = arrayfun(@(v) sprintf('%.2f', v), S_Z(anomalyIdx), 'UniformOutput', false);
+    SG_vals  = arrayfun(@(v) sprintf('%.2f', v), S_G(anomalyIdx), 'UniformOutput', false);
+
+    % Generate remarks per spike
+    remarks = strings(1, numel(PRA(anomalyIdx)));
     idxs = find(anomalyIdx);
-    remarks = strings(1, numel(idxs));
     for j = 1:numel(idxs)
         idx = idxs(j);
         if idx == 1
-            remarks(j) = "No prior data";
-            continue;
-        end
-        dG = S_G(idx) - S_G(idx - 1);
-        dZ = S_Z(idx) - S_Z(idx - 1);
-        if dG < 0 && abs(dG) > abs(dZ)
-            remarks(j) = "Anomaly due to drop in S_G";
-        elseif dZ > 0 && abs(dZ) > abs(dG)
-            remarks(j) = "Anomaly due to increase in S_Z";
+            remarks(j) = "No prior sample";
         else
-            remarks(j) = "Anomaly mixed S_G/S_Z change";
+            dG = S_G(idx) - S_G(idx - 1);
+            dZ = S_Z(idx) - S_Z(idx - 1);
+            if dG < 0 && abs(dG) > abs(dZ)
+                remarks(j) = "Anomaly due to drop in S_G";
+            elseif dZ > 0 && abs(dZ) > abs(dG)
+                remarks(j) = "Anomaly due to increase in S_Z";
+            else
+                remarks(j) = "Anomaly mixed S_G/S_Z change";
+            end
         end
     end
 
-    rangeStr = string(sprintf('%s 20:00 - %s 04:00', datestr(today - 1, 'dd/mm/yyyy'), datestr(today, 'dd/mm/yyyy')));
-    PRA_vals = join(string(round(PRA(anomalyIdx),2)), ', ');
-    SZ_vals  = join(string(S_Z(anomalyIdx)), ', ');
-    SG_vals  = join(string(S_G(anomalyIdx)), ', ');
-    plotFile = string(sprintf('PRA_%s.png', datestr(today, 'yyyymmdd')));
-    blockStr = string(blockStr);
-    remark = string(strjoin(remarks, ', '));
+    remarkStr = strjoin(remarks, '<br>');
+    PRA_str = strjoin(PRA_vals, '<br>');
+    SZ_str  = strjoin(SZ_vals, '<br>');
+    SG_str  = strjoin(SG_vals, '<br>');
 
-    newRow = table(rangeStr, todayThr, PRA_vals, SZ_vals, SG_vals, remark, blockStr, plotFile, ...
-        'VariableNames', {'Range','Threshold','PRA','SZ','SG','Remarks','Times','Plot'});
+    plotFile = sprintf('PRA_%s.png', datestr(today,'yyyymmdd'));
 
-    if isfile(saveLogFile)
-        old = readtable(saveLogFile, 'Delimiter','\t', 'TextType','string');
-        missingInOld = setdiff(newRow.Properties.VariableNames, old.Properties.VariableNames);
-        for c = missingInOld
-            old.(c{1}) = repmat("", height(old), 1);
+    newRow = table(string(rangeStr), string(timeStr), thr, string(PRA_str), ...
+        string(SZ_str), string(SG_str), string(remarkStr), string(plotFile), ...
+        'VariableNames', {'Range','Times','Threshold','PRA','SZ','SG','Remarks','Plot'});
+
+    % --- Check for existing Range before appending ---
+    if isfile(logFile)
+        old = readtable(logFile, 'Delimiter','\t', 'TextType','string');
+        if any(old.Range == string(rangeStr))
+            fprintf("🟡 Skipping log: %s already exists.\n", rangeStr);
+        else
+            combined = [old; newRow];
+            writetable(combined, logFile, 'Delimiter','\t');
         end
-        missingInNew = setdiff(old.Properties.VariableNames, newRow.Properties.VariableNames);
-        for c = missingInNew
-            newRow.(c{1}) = "";
-        end
-        old = old(:, newRow.Properties.VariableNames);
-        combined = [old; newRow];
     else
-        combined = newRow;
+        writetable(newRow, logFile, 'Delimiter','\t');
     end
-    writetable(combined, saveLogFile, 'Delimiter','\t');
 end
+
 
 %% Step 8: Update README
 try
