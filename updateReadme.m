@@ -48,24 +48,24 @@ try
             try
                 praStr = ""; szStr = ""; sgStr = "";
 
-                if ~isempty(T.PRA{i})
-                    praVals = strsplit(T.PRA{i}, ',');
+                if ~isempty(T.PRA(i))
+                    praVals = strsplit(string(T.PRA(i)), ',');
                     praStr = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), praVals, 'UniformOutput', false), '<br>');
                 end
-                if ~isempty(T.SZ{i})
-                    szVals  = strsplit(T.SZ{i}, ',');
+                if ~isempty(T.SZ(i))
+                    szVals  = strsplit(string(T.SZ(i)), ',');
                     szStr = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), szVals, 'UniformOutput', false), '<br>');
                 end
-                if ~isempty(T.SG{i})
-                    sgVals  = strsplit(T.SG{i}, ',');
+                if ~isempty(T.SG(i))
+                    sgVals  = strsplit(string(T.SG(i)), ',');
                     sgStr = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), sgVals, 'UniformOutput', false), '<br>');
                 end
 
-                remVals = strsplit(T.Remarks{i}, ',');
+                remVals = strsplit(string(T.Remarks(i)), ',');
                 remStr = strjoin(strtrim(remVals), '<br>');
 
                 rowLine = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
-                    T.Range{i}, T.Times{i}, str2double(T.Threshold{i}), praStr, szStr, sgStr, remStr, T.Plot{i});
+                    string(T.Range(i)), string(T.Times(i)), double(T.Threshold(i)), praStr, szStr, sgStr, remStr, string(T.Plot(i)));
                 tableLines{end+1} = rowLine;
             catch rowErr
                 warning("⚠️ Failed to process row %d: %s", i, rowErr.message);
