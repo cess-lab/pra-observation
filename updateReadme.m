@@ -26,9 +26,9 @@ try
     header = {
         "## Daily PRA Nighttime Detection";
         "";
-        ["> Last updated on: " datestr(timestamp, 'dd mmm yyyy, HH:MM') " (Japan Local Time)"];
+        string(["> Last updated on: " datestr(timestamp, 'dd mmm yyyy, HH:MM') " (Japan Local Time)"]);
         "";
-        ["![Latest PRA Plot](" imageURL ")"];
+        string(["![Latest PRA Plot](" imageURL ")"]);
         ""
     };
 
