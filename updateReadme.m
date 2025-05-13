@@ -45,6 +45,7 @@ try
     if isfile(logFile)
         T = readtable(logFile, 'Delimiter', '\t', 'TextType', 'string');
         T = sortrows(T, 'Range', 'descend');
+        T = unique(T, 'rows', 'stable');
         if height(T) > 5, T = T(1:5,:); end
 
         fprintf("[4] Processing %d rows from anomaly log...\n", height(T));
