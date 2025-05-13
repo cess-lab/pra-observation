@@ -96,6 +96,7 @@ try
 
     %% Combine and Write README
     finalText = [header; tableLines; footer];
+    finalText = cellstr(string(finalText));
     writelines(finalText, 'README.md');
     fprintf('✅ README.md successfully updated.\n');
 
