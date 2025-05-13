@@ -16,8 +16,10 @@ try
     [~, idx] = max([files.datenum]);
     latestFile = files(idx).name;
     figurePath = fullfile(figDir, latestFile);
+    todayFile = latestFile;
+
     imageURL = strrep(figurePath, ' ', '%20');
-    timestamp = datetime('now','TimeZone', tz);
+    timestamp = datetime('now','TimeZone','Asia/Tokyo');
 
     %% Section 1: PRA Figure Section
     fprintf("[2] Preparing header section...\n");
@@ -43,40 +45,36 @@ try
     if isfile(logFile)
         T = readtable(logFile, 'Delimiter', '\t', 'TextType', 'string');
         T = sortrows(T, 'Range', 'descend');
-        T = unique(T, 'rows', 'stable');  % remove literal duplicates
 
-        % Group by unique date range
-        [uniqueDays, ~, ic] = unique(T.Range, 'stable');
-        summaryRows = cell(length(uniqueDays), 1);
+        % Group by Range (one row per day)
+        [uniqueDays, ~, ic] = unique(T.Range);
+        summaryRows = cell(length(uniqueDays),1);
 
         for j = 1:length(uniqueDays)
             idxs = find(ic == j);
 
+            % Concatenate data from multiple rows on the same day
             rng = T.Range(idxs(1));
             timeStr = strjoin(unique(T.Times(idxs)), ', ');
             thr = max(T.Threshold(idxs));
-
-            praStr = strjoin(unique(T.PRA(idxs)), '<br>');
-            szStr  = strjoin(unique(T.SZ(idxs)), '<br>');
-            sgStr  = strjoin(unique(T.SG(idxs)), '<br>');
+            praStr = strjoin(arrayfun(@(x) string(x), unique(T.PRA(idxs))), '<br>');
+            szStr = strjoin(arrayfun(@(x) string(x), unique(T.SZ(idxs))), '<br>');
+            sgStr = strjoin(arrayfun(@(x) string(x), unique(T.SG(idxs))), '<br>');
             remStr = strjoin(unique(T.Remarks(idxs)), '<br>');
-            plt    = T.Plot(idxs(end));  % latest plot for that range
+            plt = T.Plot(idxs(end));
 
             summaryRows{j} = table(rng, timeStr, thr, praStr, szStr, sgStr, remStr, plt, ...
                 'VariableNames', {'Range', 'Times', 'Threshold', 'PRA', 'SZ', 'SG', 'Remarks', 'Plot'});
         end
 
         S = vertcat(summaryRows{:});
-        if height(S) > 5
-            S = S(1:5,:);
-        end
+        if height(S) > 5, S = S(1:5,:); end
 
         fprintf("[4] Processing %d consolidated rows...\n", height(S));
         for i = 1:height(S)
             try
                 rowLine = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
-                    string(S.Range(i)), string(S.Times(i)), double(S.Threshold(i)), ...
-                    S.PRA(i), S.SZ(i), S.SG(i), S.Remarks(i), S.Plot(i));
+                    string(S.Range(i)), string(S.Times(i)), double(S.Threshold(i)), S.PRA(i), S.SZ(i), S.SG(i), S.Remarks(i), S.Plot(i));
                 tableLines{end+1} = rowLine;
             catch rowErr
                 warning("⚠️ Failed to process row %d: %s", i, rowErr.message);
