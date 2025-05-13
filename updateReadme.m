@@ -26,9 +26,9 @@ try
     header = {
         "## Daily PRA Nighttime Detection";
         "";
-        string(["> Last updated on: " datestr(timestamp, 'dd mmm yyyy, HH:MM') " (Japan Local Time)"]);
+        sprintf("> Last updated on: %s (Japan Local Time)", datestr(timestamp, 'dd mmm yyyy, HH:MM'));
         "";
-        string(["![Latest PRA Plot](" imageURL ")"]);
+        sprintf("![Latest PRA Plot](%s)", imageURL);
         ""
     };
 
@@ -102,7 +102,7 @@ try
     %% Combine and Write README
     fprintf("[6] Writing README.md...\n");
     finalText = [header; tableLines; footer];
-    finalText = cellfun(@char, string(finalText), 'UniformOutput', false);
+    finalText = cellfun(@char, finalText, 'UniformOutput', false);
     writelines(finalText, 'README.md');
     fprintf('✅ README.md successfully updated.\n');
 
