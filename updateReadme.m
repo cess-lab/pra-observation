@@ -65,7 +65,6 @@ try
 
             summaryRows{j} = table(rng, timeStr, thr, praStr, szStr, sgStr, remStr, plt, ...
                 'VariableNames', {'Range', 'Times', 'Threshold', 'PRA', 'SZ', 'SG', 'Remarks', 'Plot'});
-                'VariableNames', {"Range", "Times", "Threshold", "PRA", "SZ", "SG", "Remarks", "Plot"});
         end
 
         S = vertcat(summaryRows{:});
