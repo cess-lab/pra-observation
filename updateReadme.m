@@ -45,32 +45,36 @@ try
     if isfile(logFile)
         T = readtable(logFile, 'Delimiter', '\t', 'TextType', 'string');
         T = sortrows(T, 'Range', 'descend');
-        T = unique(T, 'rows', 'stable');
-        if height(T) > 5, T = T(1:5,:); end
 
-        fprintf("[4] Processing %d rows from anomaly log...\n", height(T));
-        for i = 1:height(T)
+        % Group by Range (one row per day)
+        [uniqueDays, ~, ic] = unique(T.Range);
+        summaryRows = cell(length(uniqueDays),1);
+
+        for j = 1:length(uniqueDays)
+            idxs = find(ic == j);
+
+            % Concatenate data from multiple rows on the same day
+            rng = T.Range(idxs(1));
+            timeStr = strjoin(unique(T.Times(idxs)), ', ');
+            thr = max(T.Threshold(idxs));
+            praStr = strjoin(arrayfun(@(x) string(x), unique(T.PRA(idxs))), '<br>');
+            szStr = strjoin(arrayfun(@(x) string(x), unique(T.SZ(idxs))), '<br>');
+            sgStr = strjoin(arrayfun(@(x) string(x), unique(T.SG(idxs))), '<br>');
+            remStr = strjoin(unique(T.Remarks(idxs)), '<br>');
+            plt = T.Plot(idxs(end));
+
+            summaryRows{j} = table(rng, timeStr, thr, praStr, szStr, sgStr, remStr, plt, ...
+                'VariableNames', {"Range", "Times", "Threshold", "PRA", "SZ", "SG", "Remarks", "Plot"});
+        end
+
+        S = vertcat(summaryRows{:});
+        if height(S) > 5, S = S(1:5,:); end
+
+        fprintf("[4] Processing %d consolidated rows...\n", height(S));
+        for i = 1:height(S)
             try
-                praStr = ""; szStr = ""; sgStr = "";
-
-                if ~isempty(T.PRA(i))
-                    praVals = strsplit(string(T.PRA(i)), ',');
-                    praStr = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), praVals, 'UniformOutput', false), '<br>');
-                end
-                if ~isempty(T.SZ(i))
-                    szVals  = strsplit(string(T.SZ(i)), ',');
-                    szStr = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), szVals, 'UniformOutput', false), '<br>');
-                end
-                if ~isempty(T.SG(i))
-                    sgVals  = strsplit(string(T.SG(i)), ',');
-                    sgStr = strjoin(arrayfun(@(x) sprintf('%.2f', str2double(strtrim(x))), sgVals, 'UniformOutput', false), '<br>');
-                end
-
-                remVals = strsplit(string(T.Remarks(i)), ',');
-                remStr = strjoin(strtrim(remVals), '<br>');
-
                 rowLine = sprintf("| %s | %s | %.2f | %s | %s | %s | %s | ![📈](INTERMAGNET_DOWNLOADS/figures/%s) |", ...
-                    string(T.Range(i)), string(T.Times(i)), double(T.Threshold(i)), praStr, szStr, sgStr, remStr, string(T.Plot(i)));
+                    string(S.Range(i)), string(S.Times(i)), double(S.Threshold(i)), S.PRA(i), S.SZ(i), S.SG(i), S.Remarks(i), S.Plot(i));
                 tableLines{end+1} = rowLine;
             catch rowErr
                 warning("⚠️ Failed to process row %d: %s", i, rowErr.message);
