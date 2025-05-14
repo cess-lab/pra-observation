@@ -44,7 +44,15 @@ try
 
     if isfile(logFile)
         T = readtable(logFile, 'Delimiter', '\t', 'TextType', 'string');
-        T = sortrows(T, 'Range', 'ascend');
+        % Extract first date from each Range (first 10 characters)
+        try
+            firstDates = extractBetween(T.Range, 1, 10);  % e.g. "06/05/2025"
+            T.RangeDate = datetime(firstDates, 'InputFormat', 'dd/MM/yyyy');
+            T = sortrows(T, 'RangeDate', 'descend');
+            T.RangeDate = [];  % clean up helper column
+        catch err
+            warning("⚠️ Failed to parse or sort Range dates: %s", err.message);
+        end
 
         % Group by Range (one row per day)
         [uniqueDays, ~, ic] = unique(T.Range);
