@@ -44,7 +44,12 @@ try
 
     if isfile(logFile)
         T = readtable(logFile, 'Delimiter', '\t', 'TextType', 'string');
-        T = sortrows(T, 'Range', 'descend');
+        % Convert Range to datetime using the starting date in each range
+        rangeStart = extractBefore(T.Range, ' -');
+        T.RangeDate = datetime(rangeStart, 'InputFormat', 'dd/MM/yyyy', 'Format', 'yyyy-MM-dd');
+        T = sortrows(T, 'RangeDate', 'descend');
+        T.Range = erase(T.Range, '"');  % clean any stray quotes
+        T.RangeDate = [];  % remove helper column
 
         % Group by Range (one row per day)
         [uniqueDays, ~, ic] = unique(T.Range);
