@@ -76,6 +76,7 @@ try
         end
 
         S = vertcat(summaryRows{:});
+        S = flipud(S);  % show most recent first
         if height(S) > 5, S = S(1:5,:); end
 
         fprintf("[4] Processing %d consolidated rows...\n", height(S));
