@@ -44,11 +44,17 @@ try
 
     if isfile(logFile)
         T = readtable(logFile, 'Delimiter', '\t', 'TextType', 'string');
-        % Convert Range to datetime using the starting date in each range
-        rangeStart = extractBefore(T.Range, ' -');
-        T.RangeDate = datetime(rangeStart, 'InputFormat', 'dd/MM/yyyy', 'Format', 'yyyy-MM-dd');
+        % Sort by actual datetime extracted from Range
+        try
+            rangeStart = regexprep(T.Range, '\s+-.*$', '');  % Keep only date before ' -'
+            rangeStart = strtrim(rangeStart);
+            T.RangeDate = datetime(rangeStart, 'InputFormat', 'dd/MM/yyyy');
+        catch dateErr
+            warning("⚠️ Failed to parse Range dates: %s", dateErr.message);
+            T.RangeDate = repmat(datetime(2000,1,1), height(T), 1);  % fallback
+        end
+
         T = sortrows(T, 'RangeDate', 'descend');
-        T.Range = erase(T.Range, '"');  % clean any stray quotes
         T.RangeDate = [];  % remove helper column
 
         % Group by Range (one row per day)
