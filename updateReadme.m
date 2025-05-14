@@ -44,18 +44,7 @@ try
 
     if isfile(logFile)
         T = readtable(logFile, 'Delimiter', '\t', 'TextType', 'string');
-        % Sort by actual datetime extracted from Range
-        try
-            rangeStart = regexprep(T.Range, '\s+-.*$', '');  % Keep only date before ' -'
-            rangeStart = strtrim(rangeStart);
-            T.RangeDate = datetime(rangeStart, 'InputFormat', 'dd/MM/yyyy');
-        catch dateErr
-            warning("⚠️ Failed to parse Range dates: %s", dateErr.message);
-            T.RangeDate = repmat(datetime(2000,1,1), height(T), 1);  % fallback
-        end
-
-        T = sortrows(T, 'RangeDate', 'descend');
-        T.RangeDate = [];  % remove helper column
+        T = sortrows(T, 'Range', 'ascend');
 
         % Group by Range (one row per day)
         [uniqueDays, ~, ic] = unique(T.Range);
