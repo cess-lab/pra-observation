@@ -172,7 +172,7 @@ if any(anomalyIdx)
     for j = 1:numel(idxs)
         idx = idxs(j);
         if idx == 1
-            remarks(j) = "No prior data";
+            remarks(j) = "Unable to determine (No prior data)";
             continue;
         end
         dG = S_G(idx) - S_G(idx - 1);
