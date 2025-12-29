@@ -1,8 +1,8 @@
 ## Daily PRA Nighttime Detection
 
-> Last updated on: 28 Dec 2025, 12:33 (Japan Local Time)
+> Last updated on: 29 Dec 2025, 12:33 (Japan Local Time)
 
-![Latest PRA Plot](INTERMAGNET_DOWNLOADS/figures/PRA_20251228.png)
+![Latest PRA Plot](INTERMAGNET_DOWNLOADS/figures/PRA_20251229.png)
 
 ## Recent Anomaly Summary (Last 5 Anomalies)
 
@@ -12,7 +12,7 @@
 | 30/10/2025 20:00 - 31/10/2025 04:00 | 21:00–22:00, 00:00–01:00 | 12.40 | - | - | - | Anomaly due to increase in S_Z, Anomaly due to drop in S_G | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20251031.png) |
 | 29/09/2025 20:00 - 30/09/2025 04:00 | 00:00–01:00 | 13.08 | 14.42 | 96.6674 | 6.7017 | Anomaly due to increase in S_Z | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20250930.png) |
 | 29/08/2025 20:00 - 30/08/2025 04:00 | 01:00–02:00 | 41.16 | 44.31 | 160.9535 | 3.6324 | Anomaly due to drop in S_G | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20250830.png) |
-| 28/11/2025 20:00 - 29/11/2025 04:00 | 00:00–01:00 | 3.34 | 3.6 | 129.4155 | 35.9159 | Anomaly due to drop in S_G | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20251129.png) |
+| 28/12/2025 20:00 - 29/12/2025 04:00 | 20:00–21:00 | 3.34 | 3.41 | 10.9739 | 3.215 | Unable to determine (No prior data) | ![📈](INTERMAGNET_DOWNLOADS/figures/PRA_20251229.png) |
 
 ---
 ### About This Project
