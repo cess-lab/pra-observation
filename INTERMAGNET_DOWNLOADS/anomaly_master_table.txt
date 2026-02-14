@@ -119,3 +119,4 @@ Range	Threshold	PRA	SZ	SG	Remarks	Times	Plot
 08/02/2026 20:00 - 09/02/2026 04:00	7.64816933626686	8.39	225.651	26.8827	Anomaly due to increase in S_Z	02:00–03:00	PRA_20260209.png
 09/02/2026 20:00 - 10/02/2026 04:00	18.6146043495771				Unable to determine (No prior data), Anomaly due to increase in S_Z	20:00–21:00, 23:00–00:00	PRA_20260210.png
 12/02/2026 20:00 - 13/02/2026 04:00	25.376974459724	23.93	24.1375	1.0087	Unable to determine (No prior data)	20:00–21:00	PRA_20260213.png
+13/02/2026 20:00 - 14/02/2026 04:00	14.4341481478433	14.7	61.2969	4.1709	Unable to determine (No prior data)	20:00–21:00	PRA_20260214.png
