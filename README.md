@@ -1,8 +1,8 @@
 ## Daily PRA Nighttime Detection
 
-> Last updated on: 06 Apr 2026, 13:00 (Japan Local Time)
+> Last updated on: 07 Apr 2026, 12:57 (Japan Local Time)
 
-![Latest PRA Plot](INTERMAGNET_DOWNLOADS/figures/PRA_20260406.png)
+![Latest PRA Plot](INTERMAGNET_DOWNLOADS/figures/PRA_20260407.png)
 
 ## Recent Anomaly Summary (Last 5 Anomalies)
 
