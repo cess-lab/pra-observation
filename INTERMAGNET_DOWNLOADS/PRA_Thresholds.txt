@@ -391,3 +391,4 @@ Date	Threshold
 29-May-2026	0
 30-May-2026	0
 31-May-2026	0
+01-Jun-2026	0
